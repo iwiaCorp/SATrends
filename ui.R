@@ -14,6 +14,7 @@ library(leaflet.extras)
 library(shinythemes)
 #library(ggthemr) 
 
+#agregar nuevo mapa google
 
 header <- dashboardHeader(dropdownMenuOutput("task_menu" ), title = "Products & Services Trends", titleWidth =  280) 
                           

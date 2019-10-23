@@ -113,7 +113,7 @@ createData <- function(tweets){
 createCorpus <- function(text){
   library(tm)
   #corpus <- iconv(text, to = 'UTF-8-mac') #presnta error cuando se despliega en la nube
-  corpus <- iconv(text, to = 'UTF-8') #corrige despliege en la nube
+  corpus <- iconv(text, to = 'UTF-8') #corrige despliege en la nube, confirmar origen de esta configuracion
   corpus <- Corpus(VectorSource(corpus))
 }
 
