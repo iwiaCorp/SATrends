@@ -14,7 +14,8 @@ library(leaflet.extras)
 library(shinythemes)
 #library(ggthemr) 
 
-#agregar nuevo mapa google
+#agregar imagen
+formatFilePlainDemo <- base64enc::dataURI(file="formatoArchivo.png", mime="image/png")
 
 header <- dashboardHeader(dropdownMenuOutput("task_menu" ), title = "Products & Services Trends", titleWidth =  280) 
                           
@@ -23,7 +24,8 @@ sideBar <- dashboardSidebar( width = 280,
   sidebarMenu( 
     
     menuItem("Datos locales", tabName = "analisys"),
-    menuItem("Geolocalización", tabName = "geolocalizacion")
+    menuItem("Geolocalización", tabName = "geolocalizacion"),
+    menuItem("Ayuda", tabName = "help")
   )
   
   
@@ -180,6 +182,16 @@ body <- dashboardBody(
             
             
             
+            
+    ),
+    
+    tabItem(tabName = "help",
+            titlePanel("Creación archivo plano", windowTitle = "Procedimiento para crear Dataset local"),
+            h5(textOutput("description")), # Fifth level header: textOutput("description")
+            hr(),
+            img(src = formatFilePlainDemo, height = "200px"),
+            hr(),
+            h5(textOutput("detailsDemo"))
             
     )
     

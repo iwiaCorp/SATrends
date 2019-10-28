@@ -472,5 +472,15 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  # creacion descripcion de la ayuda
+  output$description <- renderText({
+    paste("El formato para la creación del archivo plano es el siguiente:")
+  })
+  output$detailsDemo <- renderText({
+    paste("Donde la columna text -> ",
+          "Texto para el análisis de sentimiento",
+          "created -> Fecha de creación",
+          "screenName -> Nombre del usuario twitter")
+  })
   
 })
