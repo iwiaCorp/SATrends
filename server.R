@@ -212,12 +212,14 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  #grafico barras datos local
   output$barPlotPolarity <-renderPlot({
     if(input$calcSentiment){
       ggplot(polarityResult(),
              aes(x = Sentimiento,
                  y = Polaridad, fill = Sentimiento)) +
         geom_bar(stat = "identity") +
+        scale_fill_manual(values=c("red", "green")) +
         labs(title = "Análisis de sentimiento \n Valoración positiva o negativa",
              x = "Sentimiento", y = "Frecuencia") +
         geom_text(aes(label = Polaridad),
@@ -285,6 +287,7 @@ shinyServer(function(input, output, session) {
              aes(x = Sentimiento,
                  y = Polaridad, fill = Sentimiento)) +
         geom_bar(stat = "identity") +
+        scale_fill_manual(values=c("red", "green")) +
         labs(title = "Análisis de sentimiento \n Valoración positiva o negativa",
              x = "Sentimiento", y = "Frecuencia") +
         geom_text(aes(label = Polaridad),
@@ -474,13 +477,10 @@ shinyServer(function(input, output, session) {
   
   # creacion descripcion de la ayuda
   output$description <- renderText({
-    paste("El formato para la creación del archivo plano es el siguiente:")
+    paste("El formato es el siguiente:")
   })
   output$detailsDemo <- renderText({
-    paste("Donde la columna text -> ",
-          "Texto para el análisis de sentimiento",
-          "created -> Fecha de creación",
-          "screenName -> Nombre del usuario twitter")
+    paste("El archivo debe ser guardado como tipo CSV y separado por coma. De la siguiente forma:")
   })
   
 })

@@ -15,7 +15,8 @@ library(shinythemes)
 #library(ggthemr) 
 
 #agregar imagen
-formatFilePlainDemo <- base64enc::dataURI(file="formatoArchivo.png", mime="image/png")
+formatFilePlainDemo <- base64enc::dataURI(file="AyudaArchivo.png", mime="image/png")
+formatInternoArchivo <- base64enc::dataURI(file="formatoCSV.png", mime="image/png")
 
 header <- dashboardHeader(dropdownMenuOutput("task_menu" ), title = "Products & Services Trends", titleWidth =  280) 
                           
@@ -186,12 +187,13 @@ body <- dashboardBody(
     ),
     
     tabItem(tabName = "help",
-            titlePanel("Creación archivo plano", windowTitle = "Procedimiento para crear Dataset local"),
+            titlePanel("Descripción archivo plano", windowTitle = "Procedimiento para crear Dataset local"),
+            h5("El archivo consta de 3 columnas, la información corresponde a comentarios sobre un producto o servicio para el análisis de sentimiento."),
             h5(textOutput("description")), # Fifth level header: textOutput("description")
-            hr(),
-            img(src = formatFilePlainDemo, height = "200px"),
-            hr(),
-            h5(textOutput("detailsDemo"))
+            img(src = formatFilePlainDemo, height = "250px"),
+            
+            h5(textOutput("detailsDemo")),
+            img(src = formatInternoArchivo, height = "100px")
             
     )
     
