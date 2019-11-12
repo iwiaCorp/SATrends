@@ -61,6 +61,7 @@ body <- dashboardBody(
                                      column( width = 12,
                                              box( width = NULL,collapsible = TRUE, 
                                                   
+                                                  textInput("geoLocalSearch", label = "Texto de búsqueda", placeholder = "Ingrese producto o servicio"),
                                                   
                                                   #selectInput("citySelected", "Ciudades", choices = c("Quito", "Guayaquil", "Cuenca")),
                                                   htmlOutput("CitiesLoaded"),

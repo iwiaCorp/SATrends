@@ -11,7 +11,7 @@ library(leaflet.extras)
 library(ggplot2)
 library(shiny)
 library(genderizeR)
-
+library(tools)
 source("./Connection.R")
 source("./LexiconCustomization_EC.R")
 source("./functions.R")
@@ -55,6 +55,9 @@ shinyServer(function(input, output, session) {
   })
   
   
+
+  
+  #Presentacion datos locales
   output$twetterDataLocal <- DT::renderDataTable(
     
     if(nrow(dataFileLoaded()) != 0 & !is.na(input$fromToDate[1])  & !is.na(input$fromToDate[2]))
@@ -63,7 +66,7 @@ shinyServer(function(input, output, session) {
         fileFilter <- dataFileLoaded()
        if(nrow(fileFilter) == 0)
          return(NULL)
-        
+       
         localTweets$data <- fileFilter %>%
         createData() 
         
@@ -74,10 +77,11 @@ shinyServer(function(input, output, session) {
         # readr::write_csv(x = localTweets$data,path = "CNT_EC_offLine.csv")
         
         localTweets$data %>%
-        DT::datatable( #colnames = c("X1","text", "created", "screenName", "longitude", "latitude"),  
-         
-                       options = list(pageLength = 10), 
-                       rownames = FALSE)
+        DT::datatable( options = list(pageLength = 10), 
+                       rownames = FALSE,
+                       #colnames = toTitleCase(colnames(localTweets$data)))
+                       colnames = c("Texto" = "text", "Fecha creación" = "createdDate", 
+                                    "Nombre usuario"= "userName", "Fecha Tweet" = "fechaTweet"))
     }
   )
   
@@ -127,8 +131,8 @@ shinyServer(function(input, output, session) {
   resultadoSentimiento <- eventReactive(input$calcSentiment, {
     req(localTweets$data)
     {
-
-      resultado <- calcSentiment(localTweets$data, "cnt_ec")
+      
+      resultado <- calcSentiment(localTweets$data, input$geoLocalSearch)
 
 
     }
@@ -136,7 +140,7 @@ shinyServer(function(input, output, session) {
   
   polarityResult <- eventReactive(resultadoSentimiento() ,{
       
-        #print(resultadoSentimiento() )
+       
         polarity <- resultadoSentimiento() %>%
                       calcPolarity
 
@@ -425,14 +429,16 @@ shinyServer(function(input, output, session) {
     
   })
   
- #tabla tweets en online
+ #tabla datos tweets en online
   output$twitterData <- DT::renderDataTable(
     
    
     tweetsDataWithoutCleanText()%>%
       DT::datatable( #colnames = c("Número","Texto", "Fecha", "Usuario"),             
                    options = list(pageLength = 10), 
-                   rownames = FALSE)
+                   rownames = FALSE,
+                   colnames = c("Texto" = "text", "Fecha creación" = "createdDate", 
+                                "Nombre usuario"= "userName", "Fecha Tweet" = "fechaTweet", "Polaridad" = "Polarity") )
   )
   
   #diagrama por dia 

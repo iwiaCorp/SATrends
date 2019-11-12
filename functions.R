@@ -56,6 +56,7 @@ createData <- function(tweets){
   tweetsUnion <- tweetsFecha %>%
     left_join( userGenero, by = c("userName" = "screenName"))
 
+ 
 #  tweetsUnion %>%
  #   arrange(recordNum) 
   
@@ -102,7 +103,10 @@ createData <- function(tweets){
   tweetsUnion<- tweetsUnion %>%
     mutate(Ciudad =  sapply(tweetsUnion$Ciudad, createAndSearchCity)) 
   
- 
+  # #polaridad
+  # tweetsUnion<- tweetsUnion %>%
+  #   mutate(Polaridad =  0) 
+  
 
   return(tweetsUnion)
   
@@ -228,17 +232,20 @@ loadLocalData <- function(fileName){
 
 }
 
+#obtener el genero a partir del nombre
 getGender <- function(names){
   
- # localGender <- gender::gender(names) %>%
-   # select( c(gender))
-  
- #gender <- gsub("[[:space:]]", "", localGender$gender)
-  #return (gender)
-  #return(localGender$gender)
-  
-  
-  genderResult <- unique(findGivenNames(names))
+  genderResult <- tryCatch(
+    expr = {
+      unique(findGivenNames(names))
+    }, 
+    error = function(c)
+    {
+      message("Error: Nombre no especificado.")
+      print(c)
+    }
+    
+  )
   
   return(genderResult$gender)
   
