@@ -76,6 +76,12 @@ createData <- function(tweets){
     mutate(Genero = ifelse(Genero == "NULL", "ND", Genero)) 
   
   tweetsUnion<- tweetsUnion %>%
+    mutate(Genero = ifelse(Genero == "character(0)", "ND", Genero))
+  
+  tweetsUnion<- tweetsUnion %>%
+    mutate(Genero = apply(tweetsUnion, 1, FUN = fixGender))
+  
+  tweetsUnion<- tweetsUnion %>%
     mutate(Genero = ifelse(Genero == "female", "Mujer", Genero)) 
   
   tweetsUnion<- tweetsUnion %>%
@@ -109,6 +115,19 @@ createData <- function(tweets){
   
 
   return(tweetsUnion)
+  
+}
+
+#corregir el genero 
+fixGender <- function(x){
+  
+  fixedGender <- x$Genero
+  
+  if(length(x$Genero) > 1){
+    fixedGender <- "ND"
+  }
+  
+  return(fixedGender)
   
 }
 
