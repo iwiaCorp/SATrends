@@ -74,7 +74,7 @@ createData <- function(tweets){
   
   tweetsUnion<- tweetsUnion %>%
     mutate(Genero = ifelse(Genero == "NULL", "ND", Genero)) 
-  
+ 
   tweetsUnion<- tweetsUnion %>%
     mutate(Genero = ifelse(Genero == "character(0)", "ND", Genero))
   
@@ -97,7 +97,9 @@ createData <- function(tweets){
     mutate(Ciudad = ifelse(nchar(Ciudad) == 0, "ND", tweetsUnion$Ciudad)) 
   
  #verifica valores na y reemplaza   
-  tweetsUnion[is.na(tweetsUnion)] <- 0
+  tweetsUnion[is.na(tweetsUnion)] <- "ND"
+  
+  tweetsUnion$Apellido[tweetsUnion$Apellido == 0] <- "ND"
   
   tweetsUnion<- tweetsUnion %>%
     mutate(Ciudad = ifelse(Ciudad == 0, "ND", tweetsUnion$Ciudad)) 
@@ -113,7 +115,9 @@ createData <- function(tweets){
   # tweetsUnion<- tweetsUnion %>%
   #   mutate(Polaridad =  0) 
   
-
+  tweetsUnion<- tweetsUnion %>%
+    mutate(element_id =  row_number())
+  
   return(tweetsUnion)
   
 }
@@ -121,9 +125,10 @@ createData <- function(tweets){
 #corregir el genero 
 fixGender <- function(x){
   
-  fixedGender <- x$Genero
+  fixedGender.df <- data.frame(x, stringsAsFactors = FALSE)
+  fixedGender <- fixedGender.df$Genero
   
-  if(length(x$Genero) > 1){
+  if(length(fixedGender.df$Genero) > 1){
     fixedGender <- "ND"
   }
   
@@ -256,7 +261,7 @@ getGender <- function(names){
   
   genderResult <- tryCatch(
     expr = {
-      unique(findGivenNames(names))
+      unique(findGivenNames(names, progress = F))
     }, 
     error = function(c)
     {

@@ -24,6 +24,9 @@ createTwitterConection()
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
   
+  #habilitar seguimiento
+  #debugonce(calcSentiment)
+
   
   #mapas 
   output$EcuadorMap <- renderLeaflet({
@@ -134,9 +137,48 @@ shinyServer(function(input, output, session) {
       
       resultado <- calcSentiment(localTweets$data, input$geoLocalSearch)
 
-
+      localTweets$data <- twetterDataLocalUpdate()
+      
+      localTweets$data <- localTweets$data %>%
+        left_join( resultado, by = c("element_id" = "element_id"))
+      
+     return(resultado)
+      
     }
   })
+  
+  output$DataLocalTweetsCalculed <- renderUI({
+    dataTweets <- localTweets$data 
+   
+    return(dataTweets)
+    
+  })
+  
+  #data frame actualizado con el valor calculo polaridad
+  twetterDataLocalUpdate <- reactive({
+    calcPolarityButtonPressed <- input$calcSentiment
+    
+    if(calcPolarityButtonPressed > 0){
+      isolate({
+        newData <- data.frame(localTweets$data)
+        
+        newData <- newData %>%
+          mutate(NuevoCalculo = 3)
+        
+        return(data.frame(newData))
+      })
+    }
+    
+  })
+  
+  #establecer nuevos valores 
+  # output$twetterDataLocal <-  DT::renderDataTable({
+  #   temp02 <- twetterDataLocalUpdate()
+  # }, rownames=FALSE,
+  # options = list(autoWidth = TRUE, 
+  #                columnDefs = list(list(width = "125px", targets = "_all"))
+  #   )
+  # )
   
   polarityResult <- eventReactive(resultadoSentimiento() ,{
       

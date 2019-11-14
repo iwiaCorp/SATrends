@@ -7,11 +7,22 @@ consumer_secret <- "YDY4aRUoNk6M4w4wNcipuis1nK0tYwMK1dT1Wo2RVTs7KT2q5v"
 access_tokenTwitter <- "22375183-EkgshwuaPQ38kZw3945LBOqKtmPIE56OldDYz9ibu"
 access_secret <- "RfJx4wizQ77Yq0XS0AvuZuacnxwDkET4wnyk1ng6Zysj1"
 
+#conexion API twitter y gestion de error conexion
 createTwitterConection <- function(){
   
   
+  resultConnection <- tryCatch(
+    expr = {
+      setup_twitter_oauth(consumer_key, consumer_secret, access_tokenTwitter, access_secret)
+    },
+    error = function(c)
+    {
+      message("Error: No se pudo establecer autorización con API Twitter")
+      print(c)
+    }
+    
+  )
   
-  setup_twitter_oauth(consumer_key, consumer_secret, access_tokenTwitter, access_secret)
   
 }
 

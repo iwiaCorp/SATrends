@@ -112,7 +112,8 @@ body <- dashboardBody(
                             #                 wellPanel(
                            tabPanel( title="Datos locales", value = 2,
                                      br(),
-                                     fluidRow(DT::dataTableOutput(outputId = "twetterDataLocal"))
+                                     fluidRow(DT::dataTableOutput(outputId = "twetterDataLocal"),
+                                              htmlOutput("DataLocalTweetsCalculed"))
                                      
                            )
                                              #)
