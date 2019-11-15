@@ -48,45 +48,58 @@ shinyServer(function(input, output, session) {
   #   filter(localTweetsData, created >= input$fromToDate[1] &  created <= input$fromToDate[2])
   # })
   
-  dataFileLoaded <- reactive({
+  #carga datos de archivo
+  dataFileLoaded <- eventReactive(input$fileLoaded,{
     req(input$fileLoaded)
     inFile <- readr::read_csv(input$fileLoaded$datapath)
     inFile$created <- as.Date(inFile$created,"%Y/%m/%d") 
-    #inFile$created <- as.Date(inFile$created,"%m/%d/%Y") 
+     
+    datosLocalesTweets$data <- inFile
     
     return(inFile)
   })
   
-  
+  datosLocalesTweets <- reactiveValues(
+    data = NULL
+  )
 
   
   #Presentacion datos locales
   output$twetterDataLocal <- DT::renderDataTable(
-    
-    if(nrow(dataFileLoaded()) != 0 & !is.na(input$fromToDate[1])  & !is.na(input$fromToDate[2]))
+    if(nrow(dataFileLoaded()) != 0)
     {
-       # fileFilter <- filter(dataFileLoaded(), created >= input$fromToDate[1] &  created <= input$fromToDate[2])
-        fileFilter <- dataFileLoaded()
-       if(nrow(fileFilter) == 0)
-         return(NULL)
-       
-        localTweets$data <- fileFilter %>%
-        createData() 
-        
-        cityValue$data <- unique(localTweets$data$Ciudad)
-     
-        # cityValue$data <- unique(sapply(localTweets$data$Ciudad, createAndSearchCity))
-        # se comenta porque presenta error al crear archivo
-        # readr::write_csv(x = localTweets$data,path = "CNT_EC_offLine.csv")
-        
-        localTweets$data %>%
-        DT::datatable( options = list(pageLength = 10), 
-                       rownames = FALSE,
-                       #colnames = toTitleCase(colnames(localTweets$data)))
-                       colnames = c("Texto" = "text", "Fecha creación" = "createdDate", 
-                                    "Nombre usuario"= "userName", "Fecha Tweet" = "fechaTweet"))
+      DT::datatable(data = datosLocalesTweets$data, options = list(pageLength = 10), 
+                    rownames = FALSE
+      )
     }
+    
   )
+  # output$twetterDataLocal <- DT::renderDataTable(
+  #   
+  #   if(nrow(dataFileLoaded()) != 0 & !is.na(input$fromToDate[1])  & !is.na(input$fromToDate[2]))
+  #   {
+  #      # fileFilter <- filter(dataFileLoaded(), created >= input$fromToDate[1] &  created <= input$fromToDate[2])
+  #       fileFilter <- dataFileLoaded()
+  #      if(nrow(fileFilter) == 0)
+  #        return(NULL)
+  #      
+  #       localTweets$data <- fileFilter %>%
+  #       createData() 
+  #       
+  #       cityValue$data <- unique(localTweets$data$Ciudad)
+  #    
+  #       # cityValue$data <- unique(sapply(localTweets$data$Ciudad, createAndSearchCity))
+  #       # se comenta porque presenta error al crear archivo
+  #       # readr::write_csv(x = localTweets$data,path = "CNT_EC_offLine.csv")
+  #       
+  #       localTweets$data %>%
+  #       DT::datatable( options = list(pageLength = 10), 
+  #                      rownames = FALSE,
+  #                      #colnames = toTitleCase(colnames(localTweets$data)))
+  #                      colnames = c("Texto" = "text", "Fecha creación" = "createdDate", 
+  #                                   "Nombre usuario"= "userName", "Fecha Tweet" = "fechaTweet"))
+  #   }
+  # )
   
   #valor reactivo para almacenar ciudades cargadas
   cityValue <- reactiveValues(
@@ -136,7 +149,7 @@ shinyServer(function(input, output, session) {
     {
       
       resultado <- calcSentiment(localTweets$data, input$geoLocalSearch)
-
+      
       localTweets$data <- twetterDataLocalUpdate()
       
       localTweets$data <- localTweets$data %>%
