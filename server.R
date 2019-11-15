@@ -25,7 +25,7 @@ createTwitterConection()
 shinyServer(function(input, output, session) {
   
   #habilitar seguimiento
-  #debugonce(calcSentiment)
+  #debugonce(createData)
 
   
   #mapas 
@@ -54,7 +54,7 @@ shinyServer(function(input, output, session) {
     inFile <- readr::read_csv(input$fileLoaded$datapath)
     inFile$created <- as.Date(inFile$created,"%Y/%m/%d") 
      
-    datosLocalesTweets$data <- inFile
+    datosLocalesTweets$data <- data.frame(inFile)
     
     return(inFile)
   })
@@ -65,41 +65,42 @@ shinyServer(function(input, output, session) {
 
   
   #Presentacion datos locales
-  output$twetterDataLocal <- DT::renderDataTable(
-    if(nrow(dataFileLoaded()) != 0)
-    {
-      DT::datatable(data = datosLocalesTweets$data, options = list(pageLength = 10), 
-                    rownames = FALSE
-      )
-    }
-    
-  )
   # output$twetterDataLocal <- DT::renderDataTable(
-  #   
-  #   if(nrow(dataFileLoaded()) != 0 & !is.na(input$fromToDate[1])  & !is.na(input$fromToDate[2]))
+  #   if(nrow(dataFileLoaded()) != 0)
   #   {
-  #      # fileFilter <- filter(dataFileLoaded(), created >= input$fromToDate[1] &  created <= input$fromToDate[2])
-  #       fileFilter <- dataFileLoaded()
-  #      if(nrow(fileFilter) == 0)
-  #        return(NULL)
-  #      
-  #       localTweets$data <- fileFilter %>%
-  #       createData() 
-  #       
-  #       cityValue$data <- unique(localTweets$data$Ciudad)
-  #    
-  #       # cityValue$data <- unique(sapply(localTweets$data$Ciudad, createAndSearchCity))
-  #       # se comenta porque presenta error al crear archivo
-  #       # readr::write_csv(x = localTweets$data,path = "CNT_EC_offLine.csv")
-  #       
-  #       localTweets$data %>%
-  #       DT::datatable( options = list(pageLength = 10), 
-  #                      rownames = FALSE,
-  #                      #colnames = toTitleCase(colnames(localTweets$data)))
-  #                      colnames = c("Texto" = "text", "Fecha creación" = "createdDate", 
-  #                                   "Nombre usuario"= "userName", "Fecha Tweet" = "fechaTweet"))
+  #     DT::datatable(data = datosLocalesTweets$data, options = list(pageLength = 10), 
+  #                   rownames = FALSE
+  #     )
   #   }
+  #   
   # )
+  output$twetterDataLocal <- DT::renderDataTable(
+
+    if(nrow(dataFileLoaded()) != 0 & !is.na(input$fromToDate[1])  & !is.na(input$fromToDate[2]))
+    {
+       # fileFilter <- filter(dataFileLoaded(), created >= input$fromToDate[1] &  created <= input$fromToDate[2])
+        fileFilter <- dataFileLoaded()
+       if(nrow(fileFilter) == 0)
+         return(NULL)
+        datosLocalesTweets$data <- fileFilter %>%
+        #datosLocalesTweets$data <- datosLocalesTweets$data %>%
+        createData()
+
+        cityValue$data <- unique(datosLocalesTweets$data$Ciudad)
+
+        # cityValue$data <- unique(sapply(localTweets$data$Ciudad, createAndSearchCity))
+        # se comenta porque presenta error al crear archivo
+        # readr::write_csv(x = localTweets$data,path = "CNT_EC_offLine.csv")
+
+        datosLocalesTweets$data %>%
+       # localTweets$data %>%
+        DT::datatable( options = list(pageLength = 10),
+                       rownames = FALSE)
+                       #colnames = toTitleCase(colnames(localTweets$data)))
+                       #colnames = c("Texto" = "text", "Fecha creación" = "createdDate",
+                           #         "Nombre usuario"= "userName", "Fecha Tweet" = "fechaTweet"))
+    }
+  )
   
   #valor reactivo para almacenar ciudades cargadas
   cityValue <- reactiveValues(
@@ -145,27 +146,28 @@ shinyServer(function(input, output, session) {
   })
   
   resultadoSentimiento <- eventReactive(input$calcSentiment, {
-    req(localTweets$data)
+    req(dataFileLoaded())
     {
+      resultado <- calcSentiment( datosLocalesTweets$data, input$geoLocalSearch)
+
+     # localTweets$data <- twetterDataLocalUpdate()
       
-      resultado <- calcSentiment(localTweets$data, input$geoLocalSearch)
-      
-      localTweets$data <- twetterDataLocalUpdate()
-      
-      localTweets$data <- localTweets$data %>%
+      datosLocalesTweets$data <-  datosLocalesTweets$data%>%
         left_join( resultado, by = c("element_id" = "element_id"))
       
+      print(datosLocalesTweets$data)
+     
      return(resultado)
       
     }
   })
   
-  output$DataLocalTweetsCalculed <- renderUI({
-    dataTweets <- localTweets$data 
-   
-    return(dataTweets)
-    
-  })
+  # output$DataLocalTweetsCalculed <- renderUI({
+  #   dataTweets <- localTweets$data 
+  #  
+  #   return(dataTweets)
+  #   
+  # })
   
   #data frame actualizado con el valor calculo polaridad
   twetterDataLocalUpdate <- reactive({
