@@ -10,6 +10,27 @@ library(sentimentr)
 #funciones basicas 
 
 #proceso #2: estructurar datos, se convierte a DF los tweets obtenidos
+#carga datos local
+createDataLocal <- function(tweets){
+  
+  
+  #verifica valores na y reemplaza   
+  tweets[is.na(tweets)] <- "ND"
+  
+  tweets<- tweets %>%
+    mutate(element_id =  row_number())
+  
+  cities_ec$nombre <- tolower(cities_ec$nombre)
+  
+  tweets <- tweets %>%
+    left_join( cities_ec, by = c("Ciudad" = "nombre"))
+ 
+  
+  return(tweets)
+  
+}
+
+#carga datos en linea
 createData <- function(tweets){
   
   #Convirtiendo los tweets en un data frame
@@ -171,7 +192,7 @@ cleanDataTweetsV2 <- function(corpus, searchText){
   #convertir a minuscula
   corpus <- tm_map(corpus, tolower)
   #quitar la frase o texto de busqueda para evitar redundancia en el texto
-  corpus <- tm_map(corpus, removeWords, c(searchText)) #este debe ir antes de quitar las puntuaciones
+  corpus <- tm_map(corpus, removeWords, searchText) #este debe ir antes de quitar las puntuaciones
   
   #quitar caracteres de puntuacion
   corpus <- tm_map(corpus, removePunctuation)
@@ -209,7 +230,7 @@ sumWordFrecuency <- function(tdm){
   
   #w <- subset(w, w>=20)
   
-  subSetWord <- subset(w, w>=20)
+  subSetWord <- subset(w, w>=10)
   
   
   if(length(subSetWord) == 0){

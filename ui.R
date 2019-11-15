@@ -105,6 +105,13 @@ body <- dashboardBody(
                                                           plotOutput(outputId = "wordCloudPlot")
                                                         ))
                                                       
+                                             ),
+                                             tabPanel(title = "Geolocalización", 
+                                                      wellPanel(
+                                                        fluidRow(
+                                                          leafletOutput(outputId = "geoMapLocal")
+                                                        ))
+                                                      
                                              )
                                     )               
                             ),

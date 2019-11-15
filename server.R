@@ -25,10 +25,20 @@ createTwitterConection()
 shinyServer(function(input, output, session) {
   
   #habilitar seguimiento
-  #debugonce(createData)
+  debugonce(createDataLocal)
 
+  #mapas datos locales (offline)
+  output$geoMapLocal <- renderLeaflet({
+    leaflet(options = leafletOptions(dragging = TRUE,
+                                     minZoom = 7,
+                                     maxZoom = 100)) %>%
+      addTiles() %>%
+      addSearchOSM() %>%
+      addResetMapButton() %>%
+      setView(lng=-78.78442, lat=-0.94434, zoom = 7)
+  })
   
-  #mapas 
+  #mapas en linea 
   output$EcuadorMap <- renderLeaflet({
     leaflet(options = leafletOptions(dragging = TRUE,
                                      minZoom = 7,
@@ -51,14 +61,21 @@ shinyServer(function(input, output, session) {
   #carga datos de archivo
   dataFileLoaded <- eventReactive(input$fileLoaded,{
     req(input$fileLoaded)
-    inFile <- readr::read_csv(input$fileLoaded$datapath)
-    inFile$created <- as.Date(inFile$created,"%Y/%m/%d") 
-     
-    datosLocalesTweets$data <- data.frame(inFile)
+    inFile <- read.csv(input$fileLoaded$datapath)
     
-    return(inFile)
+    if(nrow(inFile) == 0)
+      return(NULL)
+    
+    #crea dato local
+    datosLocalesTweets$data <- inFile %>%
+                                createDataLocal()
+    #busca ciudad 
+    cityValue$data <- unique(sapply(datosLocalesTweets$data$Ciudad, createAndSearchCity))
+    
+    return(datosLocalesTweets$data)
   })
   
+  #valor reactivo para datos locales cargados
   datosLocalesTweets <- reactiveValues(
     data = NULL
   )
@@ -78,27 +95,13 @@ shinyServer(function(input, output, session) {
 
     if(nrow(dataFileLoaded()) != 0 & !is.na(input$fromToDate[1])  & !is.na(input$fromToDate[2]))
     {
-       # fileFilter <- filter(dataFileLoaded(), created >= input$fromToDate[1] &  created <= input$fromToDate[2])
-        fileFilter <- dataFileLoaded()
-       if(nrow(fileFilter) == 0)
-         return(NULL)
-        datosLocalesTweets$data <- fileFilter %>%
-        #datosLocalesTweets$data <- datosLocalesTweets$data %>%
-        createData()
-
-        cityValue$data <- unique(datosLocalesTweets$data$Ciudad)
-
-        # cityValue$data <- unique(sapply(localTweets$data$Ciudad, createAndSearchCity))
-        # se comenta porque presenta error al crear archivo
-        # readr::write_csv(x = localTweets$data,path = "CNT_EC_offLine.csv")
-
-        datosLocalesTweets$data %>%
-       # localTweets$data %>%
+        datosLocalesTweets$data[,c(-9:-10, -13,-14)] %>%
         DT::datatable( options = list(pageLength = 10),
-                       rownames = FALSE)
-                       #colnames = toTitleCase(colnames(localTweets$data)))
-                       #colnames = c("Texto" = "text", "Fecha creación" = "createdDate",
-                           #         "Nombre usuario"= "userName", "Fecha Tweet" = "fechaTweet"))
+                       rownames = FALSE,
+                       
+                       colnames = c("Texto" = "text", "Fecha tweet" = "createdDate",
+                                    "Nombre usuario"= "userName", "Nombre" = "Nombre", "Apellido" = "Apellido", "Ciudad" = "Ciudad",
+                                    "País" = "Pais", "Género" = "Genero"))
     }
   )
   
@@ -145,6 +148,7 @@ shinyServer(function(input, output, session) {
     # }
   })
   
+  #calculo de sentimiento y actualizacion de data frame
   resultadoSentimiento <- eventReactive(input$calcSentiment, {
     req(dataFileLoaded())
     {
@@ -154,8 +158,12 @@ shinyServer(function(input, output, session) {
       
       datosLocalesTweets$data <-  datosLocalesTweets$data%>%
         left_join( resultado, by = c("element_id" = "element_id"))
+    
       
-      print(datosLocalesTweets$data)
+      #permite establecer el nombre de la columna inicial para las columnas antiguas y las nuevas del calculo polaridad
+      names(datosLocalesTweets$data) = c("text" , "createdDate",
+                   "userName", "Nombre", "Apellido", "Ciudad",
+                   "Pais", "Genero", "element_id", "id_ciudades","latitud", "longitud","sentence_id", "word_count", "Cálculo sentimiento")
      
      return(resultado)
       
@@ -230,13 +238,13 @@ shinyServer(function(input, output, session) {
   #   }
   # })
   
-  
+  #calculo para frecuencia de palabras TDM
   wordFrecuencyTerm <- eventReactive(input$calcSentiment, {
-    req(localTweets$data)
+    req(datosLocalesTweets$data)
     {
       #crear corpus
-      word <- createCorpus(localTweets$data$text) %>%
-        cleanDataTweetsV2("cnt_ec") %>%
+      word <- createCorpus(datosLocalesTweets$data$text) %>%
+        cleanDataTweetsV2(input$geoLocalSearch) %>%
         structureDataTweet() %>%
        sumWordFrecuency()
       
@@ -244,12 +252,13 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  #nube de palabras
   wordcloud <- eventReactive(input$calcSentiment, {
-    req(localTweets$data)
+    req(datosLocalesTweets$data)
     {
       #crear corpus
-      inWordcloud <- createCorpus(localTweets$data$text) %>%
-        cleanDataTweetsV2("cnt_ec") %>%
+      inWordcloud <- createCorpus( datosLocalesTweets$data$text) %>%
+        cleanDataTweetsV2(input$geoLocalSearch) %>%
         structureDataTweet() %>%
         calcWordcloud()
       
@@ -264,7 +273,7 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  
+  #matriz de termino documentos
   output$barPlotTDM <-renderPlot({
     if(input$calcSentiment){
       #barplot(wordFrecuencyTerm(), las = 2, col = rainbow(40), width = .1)
