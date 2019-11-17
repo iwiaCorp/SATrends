@@ -333,15 +333,16 @@ calcPolarity <- function(sentimentResult){
     sentiment.score.df <- as.data.frame(sentiment.score)
     
    
-    colnames(sentiment.score.df)
-    names(sentiment.score.df)[1] <- "ID"
-    names(sentiment.score.df)[2] <- "polarity"
+    #colnames(sentiment.score.df)
+    #names(sentiment.score.df)[1] <- "ID"
+    #names(sentiment.score.df)[2] <- "polarity"
 
     # #descartar valores neutros
-    sentiment.score.df <- sentiment.score.df[sentiment.score.df$polarity != 0, ]
+    #sentiment.score.df <- sentiment.score.df[sentiment.score.df$sentiment != 0, ]
     sentiment.score.df <- sentiment.score.df %>%
-      mutate(sentiment = ifelse(sentiment.score.df$polarity <0 , "Negativo", "Positivo"))
-
+      #mutate(sentiment = ifelse(sentiment.score.df$polarity <0 , "Negativo", "Positivo"))
+      mutate(sentiment =  apply(sentiment.score.df, 1, FUN = getPolarityText))
+    
     sentiment.score.df$sentiment <- as.factor(sentiment.score.df$sentiment)
 
     #convertir tabla a data frame
@@ -354,6 +355,17 @@ calcPolarity <- function(sentimentResult){
   
   
   return(sentiment.score.df)
+}
+
+#obtener etiqueta de polaridad
+getPolarityText <- function(value){
+  if(value["sentiment"] >0) {
+    "Positivo"
+  } else if(value["sentiment"] < 0){
+    "Negativo"
+  }else{
+    "Neutro"
+  }
 }
 
 #busqueda datos twitter
@@ -417,6 +429,14 @@ searchCity <- function(cities){
     
   return (city)
 }
+
+#establecer color basado en valor de una columna
+palette_fn <- function(dataLocalTweets){
+  req(!is.null(dataLocalTweets$data))
+    colorFactor(palette = "Set3", domain = dataLocalTweets$polaridad)
+    
+  }
+
 
 
 

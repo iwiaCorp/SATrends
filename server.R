@@ -25,17 +25,37 @@ createTwitterConection()
 shinyServer(function(input, output, session) {
   
   #habilitar seguimiento
-  debugonce(createDataLocal)
+  #debugonce(calcPolarity)
 
   #mapas datos locales (offline)
   output$geoMapLocal <- renderLeaflet({
-    leaflet(options = leafletOptions(dragging = TRUE,
-                                     minZoom = 7,
-                                     maxZoom = 100)) %>%
-      addTiles() %>%
-      addSearchOSM() %>%
-      addResetMapButton() %>%
-      setView(lng=-78.78442, lat=-0.94434, zoom = 7)
+    req(nrow(datosLocalesTweets$data) != 0)
+    {
+      dataLocal <- datosLocalesTweets$data %>%
+          filter(datosLocalesTweets$data$latitud != 0, datosLocalesTweets$data$longitud != 0 )
+        
+      leaflet(data = dataLocal, options = leafletOptions(dragging = TRUE,
+                                       minZoom = 7,
+                                       maxZoom = 100)) %>%
+        addTiles() %>%
+        addSearchOSM() %>%
+        addResetMapButton() %>%
+        addProviderTiles("CartoDB.Positron") %>%
+        setView(lng=-78.78442, lat=-0.94434, zoom = 7)  %>%
+        addCircles(lat = ~latitud,
+                   lng = ~longitud,
+                   stroke = FALSE,
+                   popup = ~Ciudad,
+                   color = ~colorFactor(palette = "Set3", domain = datosLocalesTweets$data$polaridad),
+                   radius = 100,
+                   fillOpacity = 0.5) %>%
+        addLegend(position = "bottomright",
+                  title="Sentimiento",
+                  pal = colorFactor(palette = "Set3", domain = datosLocalesTweets$data$polaridad),
+                  values = ~polaridad,
+                  opacity = 1)
+    }
+                
   })
   
   #mapas en linea 
@@ -94,9 +114,13 @@ shinyServer(function(input, output, session) {
   output$twetterDataLocal <- DT::renderDataTable(
 
     if(nrow(dataFileLoaded()) != 0 & !is.na(input$fromToDate[1])  & !is.na(input$fromToDate[2]))
+    #if(!is.na(input$fromToDate[1])  & !is.na(input$fromToDate[2]))
     {
+      #language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json')
         datosLocalesTweets$data[,c(-9:-10, -13,-14)] %>%
-        DT::datatable( options = list(pageLength = 10),
+        DT::datatable( options = list(pageLength = 10, language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
+                                                                       info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                                                                       paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
                        rownames = FALSE,
                        
                        colnames = c("Texto" = "text", "Fecha tweet" = "createdDate",
@@ -117,7 +141,7 @@ shinyServer(function(input, output, session) {
         cities <- c("Todas", cities)
        
     }
-    return(selectInput("Ciudades", "Ciudad", cities))
+    return(selectInput(inputId = "Ciudades", "Ciudad", cities))
 
   })
   
@@ -155,15 +179,19 @@ shinyServer(function(input, output, session) {
       resultado <- calcSentiment( datosLocalesTweets$data, input$geoLocalSearch)
 
      # localTweets$data <- twetterDataLocalUpdate()
-      
+      print(nrow(resultado))
+      summary(resultado)
       datosLocalesTweets$data <-  datosLocalesTweets$data%>%
-        left_join( resultado, by = c("element_id" = "element_id"))
+        left_join( resultado, by = c("element_id" = "element_id")) %>%
+        mutate(polaridad = apply(resultado, 1, getPolarityText))
+      
+      
     
       
       #permite establecer el nombre de la columna inicial para las columnas antiguas y las nuevas del calculo polaridad
       names(datosLocalesTweets$data) = c("text" , "createdDate",
                    "userName", "Nombre", "Apellido", "Ciudad",
-                   "Pais", "Genero", "element_id", "id_ciudades","latitud", "longitud","sentence_id", "word_count", "Cálculo sentimiento")
+                   "Pais", "Genero", "element_id", "id_ciudades","latitud", "longitud","sentence_id", "word_count", "Cálculo sentimiento", "polaridad")
      
      return(resultado)
       
@@ -177,22 +205,7 @@ shinyServer(function(input, output, session) {
   #   
   # })
   
-  #data frame actualizado con el valor calculo polaridad
-  twetterDataLocalUpdate <- reactive({
-    calcPolarityButtonPressed <- input$calcSentiment
-    
-    if(calcPolarityButtonPressed > 0){
-      isolate({
-        newData <- data.frame(localTweets$data)
-        
-        newData <- newData %>%
-          mutate(NuevoCalculo = 3)
-        
-        return(data.frame(newData))
-      })
-    }
-    
-  })
+ 
   
   #establecer nuevos valores 
   # output$twetterDataLocal <-  DT::renderDataTable({
@@ -202,6 +215,35 @@ shinyServer(function(input, output, session) {
   #                columnDefs = list(list(width = "125px", targets = "_all"))
   #   )
   # )
+  
+  #variable reactiva para el valor seleccionado en Ciudades
+  cityChoosed <- reactive({ input$Ciudades})
+  
+  #evento observador para cambiar data frame con filtro
+  observeEvent(cityChoosed(), {
+    if(cityChoosed() == "Todas")
+    {
+      datosLocalesTweets$data <- dataFileLoaded()
+    }
+    else
+    {
+      datosLocalesTweets$data<- filter(dataFileLoaded(), Ciudad %in% cityChoosed())
+    }
+    
+  })
+  
+  # output$descriptionTable <- renderText({
+  #   
+  #   req(cityChoosed())
+  #   {
+  #     paste("La tabla que se muestra a continuación muestra un total de ", nrow(dataFileLoaded()), "tweets")
+  #     
+  #     
+  #   }
+  #   
+  #   })
+  # 
+  
   
   polarityResult <- eventReactive(resultadoSentimiento() ,{
       

@@ -63,7 +63,7 @@ body <- dashboardBody(
                                                   
                                                   textInput("geoLocalSearch", label = "Texto de búsqueda", placeholder = "Ingrese producto o servicio"),
                                                   
-                                                  #selectInput("citySelected", "Ciudades", choices = c("Quito", "Guayaquil", "Cuenca")),
+                                                  #selectInput("citySelected", "Ciudades Test", choices = c("quito", "Guayaquil", "Cuenca")),
                                                   htmlOutput("CitiesLoaded"),
                                                   #radioButtons("genero", "Genero", choices = c("Femenino", "Masculino")), 
                                                   dateRangeInput("fromToDate", language = 'es', label = "Rango fecha", separator = "hasta", weekstart = 1),
@@ -119,8 +119,13 @@ body <- dashboardBody(
                             #                 wellPanel(
                            tabPanel( title="Datos locales", value = 2,
                                      br(),
-                                     fluidRow(DT::dataTableOutput(outputId = "twetterDataLocal"),
-                                              htmlOutput("DataLocalTweetsCalculed"))
+                                  
+                                     h5(textOutput("descriptionTable")),
+                                     br(),
+                                     fluidRow(
+                                        DT::dataTableOutput(outputId = "twetterDataLocal")
+                                       )
+                                             
                                      
                            )
                                              #)
