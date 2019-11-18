@@ -396,7 +396,9 @@ searchTweets <- function(searchText, sinceDate, untilDate, geoCode, ratio){
 tweetsDataPolarity <- function(tweetsFormat, tweetsSentiment){
   
   tweetsFormat %>%
-    mutate(Polarity =  tweetsSentiment) 
+    mutate(CalculoPolaridad =  tweetsSentiment$sentiment,
+           Polaridad = apply(tweetsSentiment, 1, FUN = getPolarityText))
+    #mutate(Polaridad = apply(tweetsSentiment, 1, FUN = getPolarityText))
 }
 
 #crear ciudad

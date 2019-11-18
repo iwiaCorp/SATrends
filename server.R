@@ -388,6 +388,11 @@ shinyServer(function(input, output, session) {
       polarity <- tweetsDataPolarity$data %>%
                         calcPolarity()
       
+      
+      # datosLocalesTweets$data <-  datosLocalesTweets$data%>%
+      #   left_join( resultadoGrouped, by = c("element_id" = "element_id")) %>%
+      #   mutate(polaridad = apply(resultadoGrouped, 1, getPolarityText))
+      # 
       return(polarity)
       
       
@@ -402,7 +407,7 @@ shinyServer(function(input, output, session) {
              aes(x = Sentimiento,
                  y = Polaridad, fill = Sentimiento)) +
         geom_bar(stat = "identity") +
-        scale_fill_manual(values=c("red", "green")) +
+        scale_fill_manual(values=c("red", "green", "gray")) +
         labs(title = "Análisis de sentimiento \n Valoración positiva o negativa",
              x = "Sentimiento", y = "Frecuencia") +
         geom_text(aes(label = Polaridad),
@@ -534,7 +539,7 @@ shinyServer(function(input, output, session) {
   #agregamos evento reactivo para obtener tweets con polaridad
   tweetsDataWithoutCleanText <- eventReactive(tweetsDataPolarity$data, {
     #agregamos polaridad
-    tweets.df <- tweetsDataPolarity(tweetsDataFormat$data, tweetsDataPolarity$data$sentiment)
+    tweets.df <- tweetsDataPolarity(tweetsDataFormat$data, tweetsDataPolarity$data)
     
     return(tweets.df)
     
@@ -544,12 +549,12 @@ shinyServer(function(input, output, session) {
   output$twitterData <- DT::renderDataTable(
     
    
-    tweetsDataWithoutCleanText()%>%
+    tweetsDataWithoutCleanText()[,-10]%>%
       DT::datatable( #colnames = c("Número","Texto", "Fecha", "Usuario"),             
                    options = list(pageLength = 10), 
                    rownames = FALSE,
                    colnames = c("Texto" = "text", "Fecha creación" = "createdDate", 
-                                "Nombre usuario"= "userName", "Fecha Tweet" = "fechaTweet", "Polaridad" = "Polarity") )
+                                "Nombre usuario"= "userName", "Fecha Tweet" = "fechaTweet", "Calculo polaridad" = "CalculoPolaridad", "Polaridad"="Polaridad") )
   )
   
   #diagrama por dia 
@@ -557,7 +562,7 @@ shinyServer(function(input, output, session) {
     if(input$calcGeoSentiment){
       ggplot(tweetsDataWithoutCleanText(),
              aes(x = createdDate,
-                 y = Polarity)) +
+                 y = CalculoPolaridad)) +
         geom_line(stat = "identity", color = "blue") +
         
         labs(title = "Análisis de sentimiento por fecha", 
