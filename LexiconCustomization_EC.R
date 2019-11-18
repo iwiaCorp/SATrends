@@ -7,7 +7,7 @@ if(file.exists(fileNameLexico_EC)){
   
 }
   
-fileNameCities_EC <- "tabla_ciudad_EC.csv"
+fileNameCities_EC <- "tabla_ciudad_EC_depurada.csv"
 
 if(file.exists(fileNameCities_EC)){
   cities_ec <- tryCatch(read_csv(fileNameCities_EC), error=function(e) 1)

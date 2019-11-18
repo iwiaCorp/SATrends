@@ -117,7 +117,7 @@ shinyServer(function(input, output, session) {
     #if(!is.na(input$fromToDate[1])  & !is.na(input$fromToDate[2]))
     {
       #language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json')
-        datosLocalesTweets$data[,c(-9:-10, -13,-14)] %>%
+        datosLocalesTweets$data[,c(-9:-10)] %>%
         DT::datatable( options = list(pageLength = 10, language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
                                                                        info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
                                                                        paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
@@ -177,13 +177,16 @@ shinyServer(function(input, output, session) {
     req(dataFileLoaded())
     {
       resultado <- calcSentiment( datosLocalesTweets$data, input$geoLocalSearch)
+      
+      #agrupar
+      resultadoGrouped <- data.frame(resultado)
+      resultadoGrouped <- resultadoGrouped %>% group_by(element_id) %>% summarise(sentiment = mean(sentiment))
 
      # localTweets$data <- twetterDataLocalUpdate()
-      print(nrow(resultado))
-      summary(resultado)
+    
       datosLocalesTweets$data <-  datosLocalesTweets$data%>%
-        left_join( resultado, by = c("element_id" = "element_id")) %>%
-        mutate(polaridad = apply(resultado, 1, getPolarityText))
+        left_join( resultadoGrouped, by = c("element_id" = "element_id")) %>%
+        mutate(polaridad = apply(resultadoGrouped, 1, getPolarityText))
       
       
     
@@ -191,7 +194,7 @@ shinyServer(function(input, output, session) {
       #permite establecer el nombre de la columna inicial para las columnas antiguas y las nuevas del calculo polaridad
       names(datosLocalesTweets$data) = c("text" , "createdDate",
                    "userName", "Nombre", "Apellido", "Ciudad",
-                   "Pais", "Genero", "element_id", "id_ciudades","latitud", "longitud","sentence_id", "word_count", "Cálculo sentimiento", "polaridad")
+                   "Pais", "Genero", "element_id", "id_ciudades","latitud", "longitud", "Cálculo sentimiento", "polaridad")
      
      return(resultado)
       
@@ -331,7 +334,7 @@ shinyServer(function(input, output, session) {
              aes(x = Sentimiento,
                  y = Polaridad, fill = Sentimiento)) +
         geom_bar(stat = "identity") +
-        scale_fill_manual(values=c("red", "green")) +
+        scale_fill_manual(values=c("red", "green", "gray")) +
         labs(title = "Análisis de sentimiento \n Valoración positiva o negativa",
              x = "Sentimiento", y = "Frecuencia") +
         geom_text(aes(label = Polaridad),
