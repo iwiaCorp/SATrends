@@ -17,6 +17,11 @@ library(shinythemes)
 #agregar imagen
 formatFilePlainDemo <- base64enc::dataURI(file="AyudaArchivo.png", mime="image/png")
 formatInternoArchivo <- base64enc::dataURI(file="formatoCSV.png", mime="image/png")
+pestanaDatosLocal <- base64enc::dataURI(file="pestanaDatosLocal.png", mime="image/png")
+loadLocalFile <- base64enc::dataURI(file="loadLocalFile.png", mime="image/png")
+localData <- base64enc::dataURI(file="localData.png", mime="image/png")
+analisysScreen <- base64enc::dataURI(file="analisysScreen.png", mime="image/png")
+
 
 header <- dashboardHeader(dropdownMenuOutput("task_menu" ), title = "Products & Services Trends", titleWidth =  280) 
                           
@@ -201,13 +206,36 @@ body <- dashboardBody(
     ),
     
     tabItem(tabName = "help",
-            titlePanel("Descripción archivo plano", windowTitle = "Procedimiento para crear Dataset local"),
-            h5("El archivo consta de 3 columnas, la información corresponde a comentarios sobre un producto o servicio para el análisis de sentimiento."),
-            h5(textOutput("description")), # Fifth level header: textOutput("description")
+            titlePanel("Procedimiento carga archivo local", windowTitle = "Ayuda"),
+            h5("En los puntos detallados a continuación se explica el procedimiento para realizar el Análisis de sentimiento para datos locales"),
+            titlePanel("1. Creación de archivo plano", windowTitle = "Procedimiento para crear Dataset local"),
+            h5("El archivo plano debe tener 8 columnas y corresponde al formato de un archivo CSV. La información corresponde a comentarios sobre un producto o servicio que han sido emitido en la Red social Twitter."),
+            h5(textOutput("description")), # Fifth level header: textOutput("description"),
             img(src = formatFilePlainDemo, height = "250px"),
+            h5("La descripción de cada columna se detalla a continuación:"),
             
+            h5(tags$b("Columna A:"), "corresponde al texto que se procederá al análisis de sentimiento."),
+           
+            h5(tags$b("Columna B:"), "fecha del tweet con el formato aaaa/mm/dd."),
+            h5(tags$b("Columna C:"), "nombre de usuario correspondiente a Twitter."),
+           
+            h5(tags$b("Columna D:"), "nombre del usuario."),
+            h5(tags$b("Columna E:"), "apellido del usuario."),
+            h5(tags$b("Columna F:"), "ciudad donde se emitió el tweet."),
+            h5(tags$b("Columna G:"), "país donde se emitió el tweet."),
+            h5(tags$b("Columna H:"), "género de la persona que emitió el tweet."),
+            h5("Con la información ingresada en la parte anterior, es neceario guardar el archivo con el tipo de formato csv."),
             h5(textOutput("detailsDemo")),
-            img(src = formatInternoArchivo, height = "100px")
+            img(src = formatInternoArchivo, height = "100px"),
+            titlePanel("2. Subida de archivo plano al sistema", windowTitle = "Procedimiento para cálculo de análisis de sentimiento"),
+            h5("En la parte superior izquierda, hacer click sobre Datos locales, a continuación nos presenta la pestaña para cargar el archivo generado en el paso anterior."),
+            img(src = pestanaDatosLocal, height = "200px"),
+            h5("Click sobre el botón Cargar archivo y seleccionar el archivo plano"),
+            img(src = loadLocalFile, height = "200px"),
+            h5("Revisamos los datos locales cargados desde la pestaña Datos locales"),
+            img(src = localData, height = "300px"),
+            h5("Para realizar el Análisis de sentimiento presionamos el botó  Análisis"),
+            img(src = analisysScreen, height = "350px")
             
     )
     

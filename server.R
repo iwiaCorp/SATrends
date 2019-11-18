@@ -599,10 +599,8 @@ shinyServer(function(input, output, session) {
   
   # creacion descripcion de la ayuda
   output$description <- renderText({
-    paste("El formato es el siguiente:")
+    paste("A continuación, un ejemplo del archivo:")
   })
-  output$detailsDemo <- renderText({
-    paste("El archivo debe ser guardado como tipo CSV y separado por coma. De la siguiente forma:")
-  })
+  
   
 })
