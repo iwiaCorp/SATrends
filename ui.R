@@ -136,6 +136,10 @@ body <- dashboardBody(
                                                       wellPanel(
                                                         fluidRow(
                                                           plotOutput(outputId = "sentimenWordCountsPlot")
+                                                        )),
+                                                      wellPanel(
+                                                        fluidRow(
+                                                          plotOutput(outputId = "sentimenWordPercentPlot")
                                                         ))
                                                       
                                              )

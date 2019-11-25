@@ -26,7 +26,7 @@ shinyServer(function(input, output, session) {
   
   #habilitar seguimiento
  # debugonce(createCorpus)
-  debugonce(wordCountSentiment)
+#  debugonce(calcPolarity)
 
   #mapas datos locales (offline)
   output$geoMapLocal <- renderLeaflet({
@@ -349,8 +349,9 @@ shinyServer(function(input, output, session) {
       ggplot(polarityResult(),
              aes(x = Sentimiento,
                  y = Polaridad, fill = Sentimiento)) +
-        geom_bar(stat = "identity") +
+        geom_bar(stat = "identity" ) +
         scale_fill_manual(values=c("red", "green", "gray")) +
+       # scale_fill_manual(values = colorSentimiento) 
         labs(title = "Análisis de sentimiento \n Valoración positiva o negativa",
              x = "Sentimiento", y = "Frecuencia") +
         geom_text(aes(label = Polaridad),
@@ -395,6 +396,15 @@ shinyServer(function(input, output, session) {
  
       wordCountSentiment(datosLocalesTweets$data)
     }
+  )
+  
+  #grafico porción de uso de palabras
+  output$sentimenWordPercentPlot <- renderPlot(
+    if(nrow(datosLocalesTweets$data) > 0){
+      
+      wordPercentSentiment(datosLocalesTweets$data)
+    }
+    
   )
   
   #evento reactivo

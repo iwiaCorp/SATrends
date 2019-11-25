@@ -4,8 +4,8 @@ library(dplyr)
 library(tidyr)
 #library(qdap)
 library(sentimentr)
-
-
+library(tm)
+library(tidytext)
 
 #funciones basicas 
 
@@ -160,7 +160,7 @@ fixGender <- function(x){
 
 #crear corpus
 createCorpus <- function(text){
-  library(tm)
+ 
   #corpus <- iconv(text, to = 'UTF-8-mac') #presnta error cuando se despliega en la nube
   corpus <- iconv(text, to = 'UTF-8') #corrige despliege en la nube, confirmar origen de esta configuracion
   corpus <- Corpus(VectorSource(corpus))
@@ -182,8 +182,22 @@ cleanDataTweets <- function(tweetText){
   #opinionText$text.x  <- iconv(opinionText$text.x , "latin1", "ASCII", sub="")  #elimina las ñ, tildes
   opinionText$text <- chartr('áéíóúñ','aeioun', opinionText$text)
   
-  tweetCleanText.df <- opinionText %>% select(text)
-  write.csv(tweetCleanText.df, "LeninTextoLimpio.csv")
+  #tweetCleanText.df <- opinionText %>% select(text)
+  #write.csv(tweetCleanText.df, "LeninTextoLimpio.csv")
+  
+  #nuevas carateristicas limpieza
+  
+  opinionText$text <- gsub("[[:cntrl:]]", " ", opinionText$text)
+  opinionText$text <- tolower(opinionText$text)
+  opinionText$text <- removeWords(opinionText$text, words = stopwords("spanish"))
+  opinionText$text <- removeWords( opinionText$text, words = c("usted", "pues", "tal", "tan", "así", "dijo", "cómo", "sino", "entonces", "aunque", "don", "doña"))
+  opinionText$text <- removePunctuation(opinionText$text)
+  opinionText$text <- removeNumbers(opinionText$text)
+  opinionText$text <- stripWhitespace(opinionText$text)
+  
+  #tweetCleanText.df <- opinionText %>% select(text)
+  #write.csv(tweetCleanText.df, "LeninTextoLimpioV2.csv")
+  
   
   return(opinionText$text)
 }
@@ -345,6 +359,10 @@ calcPolarity <- function(sentimentResult){
     sentiment.score.df <- sentiment.score.df %>%
       #mutate(sentiment = ifelse(sentiment.score.df$polarity <0 , "Negativo", "Positivo"))
       mutate(sentiment =  apply(sentiment.score.df, 1, FUN = getPolarityText))
+    
+    sentiment.score.df <- sentiment.score.df %>%
+      mutate(colorSentimiento =  ifelse(sentiment.score.df$sentiment == "Positivo", "blue", "red"))
+    
     
     sentiment.score.df$sentiment <- as.factor(sentiment.score.df$sentiment)
 
@@ -542,8 +560,6 @@ lollipopPlot <- function(textDataTweets){
 #grafico palabras de sentimiento
 wordCountSentiment <- function(textData){
   
-  library(tidytext)
-  
   cleanText <- textData%>%
     cleanDataTweets()
   
@@ -562,14 +578,53 @@ wordCountSentiment <- function(textData){
   clean_dt$word <- factor(clean_dt$word,
                           levels = rev(clean_dt$word))
   clean_dt <- clean_dt %>%
-    mutate(Polaridad = ifelse(value > 0, "Positivo", "negativo"))
-  
+    mutate(Polaridad = ifelse(value > 0, "Positivo", "Negativo"))
   
   ggplot(clean_dt, aes(x = word, y = n, fill = Polaridad)) +
     geom_col(show.legend = F) +
     facet_wrap(~Polaridad, scale = "free")+
     coord_flip()+
     labs(title = "Conteo palabras de sentimiento", x = "Palabras", y = "Número")
+  
+}
+
+#grafico porcentaje de palabras de sentimiento
+wordPercentSentiment <- function(textData){
+  
+  cleanText <- textData%>%
+    cleanDataTweets()
+  
+  df.tm2 <- data.frame(tweets = cleanText, stringsAsFactors = F )
+  df.tm2$tweets <- as.character(df.tm2$tweets) #importante el texto que no sea factor
+  
+  clean_dt <- df.tm2 %>%
+    unnest_tokens(word, tweets, 
+                  to_lower = F) %>%
+    filter(word %in% lexico_ec$word ) %>%
+    count(word, sort = T)
+  
+  clean_dt<- clean_dt %>%
+    inner_join(lexico_ec, by = c("word" = "word"))
+  
+  clean_dt$word <- factor(clean_dt$word,
+                          levels = rev(clean_dt$word))
+  #clean_dt <- clean_dt %>%
+   # mutate(Polaridad = ifelse(value > 0, "Positivo", "Negativo"))
+  
+  # ggplot(clean_dt, aes(x = word, y = n, fill = Polaridad)) +
+  #   geom_col(show.legend = F) +
+  #   facet_wrap(~Polaridad, scale = "free")+
+  #   coord_flip()+
+  #   labs(title = "Conteo palabras de sentimiento", x = "Palabras", y = "Número")
+  
+  clean_dt %>%
+    mutate(perc = (n/sum(n))*100) %>%
+    .[1:10, ] %>%
+    ggplot(aes(word, perc)) +
+    geom_bar(stat = "identity", color = "black", fill = "#87CEFA") +
+    geom_text(aes(hjust = 1.3, label = round(perc, 2))) + 
+    coord_flip() +
+    labs(title = "Proporción de uso de cada palabra. \nDiez palabras más frecuentes", x = "Palabras", y = "Porcentaje de uso")
   
 }
 
