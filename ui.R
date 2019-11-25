@@ -117,6 +117,27 @@ body <- dashboardBody(
                                                           leafletOutput(outputId = "geoMapLocal")
                                                         ))
                                                       
+                                             ),
+                                             tabPanel(title = "Mapa de calor", 
+                                                      wellPanel(
+                                                        fluidRow(
+                                                          plotOutput(outputId = "heatMapLocalData")
+                                                        ))
+                                                      
+                                             ),
+                                             tabPanel(title = "Grafico Lollipop", 
+                                                      wellPanel(
+                                                        fluidRow(
+                                                          plotOutput(outputId = "lollipopPlot")
+                                                        ))
+                                                      
+                                             ),
+                                             tabPanel(title = "Conteo palabras de sentimiento", 
+                                                      wellPanel(
+                                                        fluidRow(
+                                                          plotOutput(outputId = "sentimenWordCountsPlot")
+                                                        ))
+                                                      
                                              )
                                     )               
                             ),

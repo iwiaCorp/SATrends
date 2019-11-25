@@ -25,7 +25,8 @@ createTwitterConection()
 shinyServer(function(input, output, session) {
   
   #habilitar seguimiento
-  #debugonce(calcPolarity)
+ # debugonce(createCorpus)
+  debugonce(wordCountSentiment)
 
   #mapas datos locales (offline)
   output$geoMapLocal <- renderLeaflet({
@@ -100,6 +101,10 @@ shinyServer(function(input, output, session) {
     data = NULL
   )
 
+  #valor reactivo datos limpios
+  cleanDataText <- reactiveValues(
+    data = NULL
+  )
   
   #Presentacion datos locales
   # output$twetterDataLocal <- DT::renderDataTable(
@@ -185,10 +190,13 @@ shinyServer(function(input, output, session) {
      # localTweets$data <- twetterDataLocalUpdate()
     
       datosLocalesTweets$data <-  datosLocalesTweets$data%>%
+        arrange(element_id) %>%
         left_join( resultadoGrouped, by = c("element_id" = "element_id")) %>%
         mutate(polaridad = apply(resultadoGrouped, 1, getPolarityText))
       
       
+      
+     #write.csv(datosLocalesTweets$data, "LeninPolaridad.csv")
     
       
       #permite establecer el nombre de la columna inicial para las columnas antiguas y las nuevas del calculo polaridad
@@ -287,11 +295,19 @@ shinyServer(function(input, output, session) {
   wordFrecuencyTerm <- eventReactive(input$calcSentiment, {
     req(datosLocalesTweets$data)
     {
+      #datos limpios
+      cleanDataText$data <- createCorpus(datosLocalesTweets$data$text) %>%
+           cleanDataTweetsV2(input$geoLocalSearch)
+      
       #crear corpus
-      word <- createCorpus(datosLocalesTweets$data$text) %>%
-        cleanDataTweetsV2(input$geoLocalSearch) %>%
-        structureDataTweet() %>%
-       sumWordFrecuency()
+      word <- cleanDataText$data %>%
+              structureDataTweet() %>%
+              sumWordFrecuency()
+      
+      # word <- createCorpus(datosLocalesTweets$data$text) %>%
+      #   cleanDataTweetsV2(input$geoLocalSearch) %>%
+      #   structureDataTweet() %>%
+      #  sumWordFrecuency()
       
       return(word)
     }
@@ -358,6 +374,28 @@ shinyServer(function(input, output, session) {
       
     }
   })
+  
+  #mapa de calor
+  output$heatMapLocalData <- renderPlot(
+    if(input$calcSentiment){
+      headMapPlot(datosLocalesTweets$data)
+    }
+   )
+  
+  #grafico lollipop
+  output$lollipopPlot <- renderPlot(
+    if(nrow(datosLocalesTweets$data) > 0){
+      lollipopPlot(datosLocalesTweets$data)
+    }
+  )
+  
+  #grafico conteo de palabas de sentimiento
+  output$sentimenWordCountsPlot <- renderPlot(
+    if(nrow(datosLocalesTweets$data) > 0){
+ 
+      wordCountSentiment(datosLocalesTweets$data)
+    }
+  )
   
   #evento reactivo
   geoSearchedTweets <- reactiveValues(

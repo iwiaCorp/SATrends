@@ -182,6 +182,9 @@ cleanDataTweets <- function(tweetText){
   #opinionText$text.x  <- iconv(opinionText$text.x , "latin1", "ASCII", sub="")  #elimina las ñ, tildes
   opinionText$text <- chartr('áéíóúñ','aeioun', opinionText$text)
   
+  tweetCleanText.df <- opinionText %>% select(text)
+  write.csv(tweetCleanText.df, "LeninTextoLimpio.csv")
+  
   return(opinionText$text)
 }
 
@@ -437,8 +440,138 @@ palette_fn <- function(dataLocalTweets){
   req(!is.null(dataLocalTweets$data))
     colorFactor(palette = "Set3", domain = dataLocalTweets$polaridad)
     
-  }
+}
 
+#mapa de calor sentimiento por ciudad
+
+headMapPlot <- function(df.tm){
+  
+  dataLocal <- data.frame(df.tm) %>% select(Ciudad, createdDate, 13)
+   
+  
+  names(dataLocal) = c("Ciudad" , "createdDate",
+                                     "Sentimiento")
+  
+  ggplot(data = dataLocal, aes(x = createdDate, y = Ciudad)) +
+    geom_tile(aes(fill=Sentimiento),colour="grey5") +
+    scale_y_discrete(breaks = df.tm$Ciudad) +
+    
+    scale_fill_gradient2(low = "#FF0000", midpoint=0,space="Lab", mid="#FFE500", high = "#09B505") +
+    ggtitle("Análisis de Sentimiento por ciudad") +
+    theme(axis.text.y = element_text(colour="grey5"),
+          axis.text.x = element_text(colour="grey5"),
+          axis.ticks.y = element_line(colour="white"),
+          axis.ticks.x = element_line(colour="white"),
+          axis.title.x = element_text(colour="white"),
+         
+          plot.background=element_rect(fill="white"),
+          panel.background=element_rect(fill="white"),
+          panel.border=element_rect(fill=NA,colour="white"),
+          panel.grid.minor.x = element_line(colour="white"),
+          panel.grid.major.x = element_line(colour="white"),
+          panel.grid.minor.y = element_line(colour="white"),
+          panel.grid.major.y = element_line(colour="white"),
+          legend.background = element_rect(fill = "white"),
+          legend.text = element_text(colour="black"),
+          legend.title = element_text(colour="black"))
+}
+
+#establecer color para sentimiento
+colorPolarity <- function(dato){
+  
+  value <- as.integer(dato["value"])
+  color <- "grey"
+  if(value > 0)
+  {
+    color <- "blue"
+  }
+  else if(value == 0)
+  {
+    color <- "grey"
+  }
+  else
+  {
+    color <- "red"
+  }
+  
+  return(color)
+}
+
+#grafico lollipop 
+
+lollipopPlot <- function(textDataTweets){
+  library(tidytext)
+  
+  cleanText <- textDataTweets%>%
+              cleanDataTweets()
+  
+  df.tm2 <- data.frame(tweets = cleanText, stringsAsFactors = F )
+  df.tm2$tweets <- as.character(df.tm2$tweets) #importante el texto que no sea factor
+  
+  clean_dt <- df.tm2 %>%
+    unnest_tokens(word, tweets, 
+                  to_lower = F) %>%
+    filter(word %in% lexico_ec$word ) %>%
+    count(word, sort = T)
+  
+  clean_dt<- clean_dt %>%
+    inner_join(lexico_ec, by = c("word" = "word"))
+  
+  clean_dt$word <- factor(clean_dt$word,
+                          levels = rev(clean_dt$word))
+  
+  clean_dt <- clean_dt %>%
+    mutate(color = apply(clean_dt, 1, FUN = colorPolarity))
+  
+  ggplot(data = clean_dt[1:10,], aes(x = n, y = word)) +
+    geom_segment(linetype = 'dashed',
+                 size = .1,
+                 aes(yend = word, 
+                     x = min(n) - 50, 
+                     xend = n,
+                     linetype = "mean")) +
+    #geom_point(size = 15, color = '#e66101') +
+    geom_point(size = 15, color = clean_dt$color[1:10]) +
+    geom_text(aes(label = n), size = 6) +
+    coord_cartesian(xlim = c(1,15)) +
+    labs(title = "Las 10 palabras más utilizadas",
+         x = "Frecuencia", y = "Palabras") 
+  
+}
+
+#grafico palabras de sentimiento
+wordCountSentiment <- function(textData){
+  
+  library(tidytext)
+  
+  cleanText <- textData%>%
+    cleanDataTweets()
+  
+  df.tm2 <- data.frame(tweets = cleanText, stringsAsFactors = F )
+  df.tm2$tweets <- as.character(df.tm2$tweets) #importante el texto que no sea factor
+  
+  clean_dt <- df.tm2 %>%
+    unnest_tokens(word, tweets, 
+                  to_lower = F) %>%
+    filter(word %in% lexico_ec$word ) %>%
+    count(word, sort = T)
+  
+  clean_dt<- clean_dt %>%
+    inner_join(lexico_ec, by = c("word" = "word"))
+  
+  clean_dt$word <- factor(clean_dt$word,
+                          levels = rev(clean_dt$word))
+  clean_dt <- clean_dt %>%
+    mutate(Polaridad = ifelse(value > 0, "Positivo", "negativo"))
+  
+  
+  ggplot(clean_dt, aes(x = word, y = n, fill = Polaridad)) +
+    geom_col(show.legend = F) +
+    facet_wrap(~Polaridad, scale = "free")+
+    coord_flip()+
+    labs(title = "Conteo palabras de sentimiento", x = "Palabras", y = "Número")
+  
+}
 
 
 
