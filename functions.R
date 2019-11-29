@@ -146,10 +146,11 @@ createData <- function(tweets){
 #corregir el genero 
 fixGender <- function(x){
   
-  fixedGender.df <- data.frame(x, stringsAsFactors = FALSE)
-  fixedGender <- fixedGender.df$Genero
-  
-  if(length(fixedGender.df$Genero) > 1){
+ # fixedGender.df <- data.frame(x, stringsAsFactors = FALSE)
+ # fixedGender <- fixedGender.df$Genero
+  fixedGender <- x["Genero"]
+ # if(length(fixedGender.df$Genero) > 1){
+  if(length( x["Genero"]) > 1){
     fixedGender <- "ND"
   }
   
@@ -320,16 +321,24 @@ calcSentiment <- function(tweetsData, searchedTweet){
   #tweets <- cleanDataTweetsV2(tweetsData$text, searchedTweet) funciona con tm
   
   
-  
+  #establecer formato aceptado para nuevo diccionario
   keyCustomEC <- data.frame(words = tolower(lexico_ec$word),
                             polarity = lexico_ec$value,
                             stringsAsFactors = FALSE)
 
   myKeyCustomEC <- as_key(keyCustomEC)
+  
+  #establece formato aceptado para nuevo diccionario cambio sentimiento
+  valenceShiftEC <- data.frame(words = tolower(lexicoCambioSentimiento$x),
+                               polarity = lexicoCambioSentimiento$y,
+                               stringsAsFactors = FALSE)
+  myValenceShiftEC <- as_key(valenceShiftEC)
+  
+  
 
-  if(is_key(myKeyCustomEC) == TRUE){
+  if(is_key(myKeyCustomEC) == TRUE & is_key(myValenceShiftEC) == TRUE){
  
-    result <- sentiment(tweets, polarity_dt = myKeyCustomEC)
+    result <- sentiment(tweets, polarity_dt = myKeyCustomEC, valence_shifters_dt = myValenceShiftEC )
 
   }
   
@@ -536,7 +545,7 @@ lollipopPlot <- function(textDataTweets){
     inner_join(lexico_ec, by = c("word" = "word"))
   
   clean_dt$word <- factor(clean_dt$word,
-                          levels = rev(clean_dt$word))
+                          levels = rev(unique(clean_dt$word)))
   
   clean_dt <- clean_dt %>%
     mutate(color = apply(clean_dt, 1, FUN = colorPolarity))
@@ -576,7 +585,7 @@ wordCountSentiment <- function(textData){
     inner_join(lexico_ec, by = c("word" = "word"))
   
   clean_dt$word <- factor(clean_dt$word,
-                          levels = rev(clean_dt$word))
+                          levels = rev(unique(clean_dt$word)))
   clean_dt <- clean_dt %>%
     mutate(Polaridad = ifelse(value > 0, "Positivo", "Negativo"))
   
@@ -607,7 +616,7 @@ wordPercentSentiment <- function(textData){
     inner_join(lexico_ec, by = c("word" = "word"))
   
   clean_dt$word <- factor(clean_dt$word,
-                          levels = rev(clean_dt$word))
+                          levels = rev(unique(clean_dt$word)))
   #clean_dt <- clean_dt %>%
    # mutate(Polaridad = ifelse(value > 0, "Positivo", "Negativo"))
   

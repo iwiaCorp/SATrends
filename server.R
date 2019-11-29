@@ -26,7 +26,7 @@ shinyServer(function(input, output, session) {
   
   #habilitar seguimiento
  # debugonce(createCorpus)
-#  debugonce(calcPolarity)
+ # debugonce(createDataLocal)
 
   #mapas datos locales (offline)
   output$geoMapLocal <- renderLeaflet({
@@ -128,8 +128,8 @@ shinyServer(function(input, output, session) {
                                                                        paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
                        rownames = FALSE,
                        
-                       colnames = c("Texto" = "text", "Fecha tweet" = "createdDate",
-                                    "Nombre usuario"= "userName", "Nombre" = "Nombre", "Apellido" = "Apellido", "Ciudad" = "Ciudad",
+                      colnames = c("Texto" = "text", "Fecha tweet" = "createdDate",
+                                   "Nombre usuario"= "userName", "Nombre" = "Nombre", "Apellido" = "Apellido", "Ciudad" = "Ciudad",
                                     "País" = "Pais", "Género" = "Genero"))
     }
   )
