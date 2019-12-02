@@ -26,7 +26,7 @@ shinyServer(function(input, output, session) {
   
   #habilitar seguimiento
  # debugonce(createCorpus)
- # debugonce(createDataLocal)
+  debugonce(wordCountSentiment)
 
   #mapas datos locales (offline)
   output$geoMapLocal <- renderLeaflet({
@@ -82,7 +82,7 @@ shinyServer(function(input, output, session) {
   #carga datos de archivo
   dataFileLoaded <- eventReactive(input$fileLoaded,{
     req(input$fileLoaded)
-    inFile <- read.csv(input$fileLoaded$datapath)
+    inFile <- read.csv(input$fileLoaded$datapath )
     
     if(nrow(inFile) == 0)
       return(NULL)
@@ -195,8 +195,8 @@ shinyServer(function(input, output, session) {
         mutate(polaridad = apply(resultadoGrouped, 1, getPolarityText))
       
       
-      
-     #write.csv(datosLocalesTweets$data, "LeninPolaridad.csv")
+      #importar datos cargados
+      #write.csv(datosLocalesTweets$data, "ParoPolaridad.csv")
     
       
       #permite establecer el nombre de la columna inicial para las columnas antiguas y las nuevas del calculo polaridad
@@ -349,15 +349,15 @@ shinyServer(function(input, output, session) {
       ggplot(polarityResult(),
              aes(x = Sentimiento,
                  y = Polaridad, fill = Sentimiento)) +
-        geom_bar(stat = "identity" ) +
-        scale_fill_manual(values=c("red", "green", "gray")) +
+        geom_bar(stat = "identity", colour = "black", size = 0.25, width = 0.5 ) +
+        scale_fill_manual(values = c("#FFDDDD", "gray", "#CCEEFF" ), guide = FALSE) +
        # scale_fill_manual(values = colorSentimiento) 
         labs(title = "Análisis de sentimiento \n Valoración positiva o negativa",
              x = "Sentimiento", y = "Frecuencia") +
         geom_text(aes(label = Polaridad),
                   vjust = 1.5, color = "black",
                   size = 5) +
-
+        
         theme(plot.title = element_text(hjust = 0.5),
               axis.text = element_text(size=12),
               axis.title = element_text(size=14,face = "bold"),

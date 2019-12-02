@@ -196,8 +196,8 @@ cleanDataTweets <- function(tweetText){
   opinionText$text <- removeNumbers(opinionText$text)
   opinionText$text <- stripWhitespace(opinionText$text)
   
-  #tweetCleanText.df <- opinionText %>% select(text)
-  #write.csv(tweetCleanText.df, "LeninTextoLimpioV2.csv")
+  tweetCleanText.df <- opinionText %>% select(text)
+  write.csv(tweetCleanText.df, "ParoTextoLimpio.csv")
   
   
   return(opinionText$text)
@@ -483,7 +483,7 @@ headMapPlot <- function(df.tm){
     geom_tile(aes(fill=Sentimiento),colour="grey5") +
     scale_y_discrete(breaks = df.tm$Ciudad) +
     
-    scale_fill_gradient2(low = "#FF0000", midpoint=0,space="Lab", mid="#FFE500", high = "#09B505") +
+    scale_fill_gradient2(low = "#FFDDDD", midpoint=0,space="Lab", mid="#FFE500", high = "#CCEEFF") +
     ggtitle("Análisis de Sentimiento por ciudad") +
     theme(axis.text.y = element_text(colour="grey5"),
           axis.text.x = element_text(colour="grey5"),
@@ -589,11 +589,39 @@ wordCountSentiment <- function(textData){
   clean_dt <- clean_dt %>%
     mutate(Polaridad = ifelse(value > 0, "Positivo", "Negativo"))
   
-  ggplot(clean_dt, aes(x = word, y = n, fill = Polaridad)) +
-    geom_col(show.legend = F) +
-    facet_wrap(~Polaridad, scale = "free")+
+  # ggplot(clean_dt, aes(x = word, y = n, fill = Polaridad)) +
+  #   geom_col(show.legend = F) +
+  #   facet_wrap(~Polaridad, scale = "free")+
+  #   coord_flip()+
+  #   labs(title = "Conteo palabras de sentimiento", x = "Palabras", y = "Número")
+  # tryCatch( 
+  #   expr = {
+  #     
+  #   }
+  #   )
+  clean_dt %>%
+    filter(n>10 ) %>%
+    arrange(Polaridad) %>%
+    ggplot( aes(x = reorder(word, n), y = factor(n), fill = Polaridad)) +
+    geom_col( position = "identity" , colour = "black", size = 0.25, width = 0.5) +
+    scale_fill_manual(values = c("#FFDDDD", "#CCEEFF"), guide = FALSE) +
+    # ylim(c(3,140)) +
+    facet_wrap(~Polaridad, scales = "free")+
     coord_flip()+
     labs(title = "Conteo palabras de sentimiento", x = "Palabras", y = "Número")
+  
+  
+  # genderResult <- tryCatch(
+  #   expr = {
+  #     unique(findGivenNames(names, progress = F))
+  #   }, 
+  #   error = function(c)
+  #   {
+  #     message("Error: Nombre no especificado.")
+  #     print(c)
+  #   }
+  #   
+  # )
   
 }
 
@@ -630,7 +658,7 @@ wordPercentSentiment <- function(textData){
     mutate(perc = (n/sum(n))*100) %>%
     .[1:10, ] %>%
     ggplot(aes(word, perc)) +
-    geom_bar(stat = "identity", color = "black", fill = "#87CEFA") +
+    geom_bar(stat = "identity", color = "black", fill = "#87CEFA", size = 0.25, width = 0.5) +
     geom_text(aes(hjust = 1.3, label = round(perc, 2))) + 
     coord_flip() +
     labs(title = "Proporción de uso de cada palabra. \nDiez palabras más frecuentes", x = "Palabras", y = "Porcentaje de uso")
