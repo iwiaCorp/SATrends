@@ -6,6 +6,8 @@ fileNameLexico_EC <- "lexico_ec_custom.csv"
 if(file.exists(fileNameLexico_EC)){
   lexico_ec <- tryCatch(read_csv(fileNameLexico_EC), error=function(e) 1)
   
+  lexico_ec_table <- data.frame(lexico_ec)
+  
 }
   
 #lexico cambio sentimiento español-ecuador

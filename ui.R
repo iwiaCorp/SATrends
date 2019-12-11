@@ -31,6 +31,7 @@ sideBar <- dashboardSidebar( width = 280,
     
     menuItem("Datos locales", tabName = "analisys"),
     menuItem("Geolocalización", tabName = "geolocalizacion"),
+    menuItem("Configuración", tabName = "configuration"),
     menuItem("Ayuda", tabName = "help")
   )
   
@@ -229,6 +230,22 @@ body <- dashboardBody(
             
             
     ),
+    tabItem(tabName = "configuration",
+      titlePanel("Configuración de diccionario", windowTitle = "Configuración de diccionarios"),
+        tabsetPanel(type = "tabs", id= "tabsetPanel",
+          tabPanel(title ="Diccionario de sentimientos",
+                   br(),
+                   checkboxInput("showData", "Mostrar datos", value = FALSE),
+                   actionButton("add_btn", "Agregar"),
+                   actionButton("delete_btn", "Eliminar"),
+                   br(),
+                   br(),
+                   DT::dataTableOutput(output = "dictionary_ec")
+                   
+          ),
+          tabPanel(title = "Diccionario cambio de sentimientos")
+        )
+      ),
     
     tabItem(tabName = "help",
             titlePanel("Procedimiento carga archivo local", windowTitle = "Ayuda"),

@@ -16,6 +16,9 @@ source("./Connection.R")
 source("./LexiconCustomization_EC.R")
 source("./functions.R")
 
+#asigna por sesion diccionario para edicion
+
+
 createTwitterConection()
 
 #localTweetsData <- loadLocalData("datosTweets_CNT_12072019To13072019.csv")
@@ -26,7 +29,7 @@ shinyServer(function(input, output, session) {
   
   #habilitar seguimiento
  # debugonce(createCorpus)
-  debugonce(wordCountSentiment)
+  #debugonce(createDataLocal)
 
   #mapas datos locales (offline)
   output$geoMapLocal <- renderLeaflet({
@@ -649,6 +652,48 @@ shinyServer(function(input, output, session) {
   output$description <- renderText({
     paste("A continuación, un ejemplo del archivo:")
   })
+  
+  # lexico_ec_data <- eventReactive(nrow(lexico_ec) != 0, {
+  # 
+  #    lexico_ec.df <- data.frame(lexico_ec)
+  #    
+  # })
+   
+  lexico_ec_table <- reactiveVal(lexico_ec_table)
+  
+  #observador para agregar palabras 
+  observeEvent(input$add_btn, {
+    
+    t = rbind(data.frame(word = "",
+                         value = 0), lexico_ec_table())
+    lexico_ec_table(t)
+  })
+  
+  #observador para eliminar palabras
+  observeEvent(input$delete_btn, {
+    t = lexico_ec_table()
+    
+    if (!is.null(input$dictionary_ec_rows_selected)) {
+      t <- t[-as.numeric(input$dictionary_ec_rows_selected),]
+    }
+    lexico_ec_table(t)
+  })
+  
+  #configuracion del diccionario
+  output$dictionary_ec <- DT::renderDataTable(
+    
+    if(input$showData)
+    {
+        lexico_ec_table() %>%
+        DT::datatable( options = list(pageLength = 10, language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
+                                                                       info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                                                                       paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
+                       rownames = FALSE,
+                       editable = TRUE,
+                       colnames = c("Palabra" = "word", "Valor" = "value")
+                       )
+    }
+  )
   
   
 })
