@@ -661,12 +661,17 @@ shinyServer(function(input, output, session) {
    
   lexico_ec_table <- reactiveVal(lexico_ec_table)
   
+  proxy = DT::dataTableProxy('dictionary_ec')
+  
   #observador para agregar palabras 
   observeEvent(input$add_btn, {
     
-    t = rbind(data.frame(word = "",
-                         value = 0), lexico_ec_table())
-    lexico_ec_table(t)
+    t = rbind(data.frame(word = "<ingrese palabra>",
+                         value = 0), lexico_ec_table(), stringsAsFactors = FALSE )
+    t$word <- as.character(t$word)
+    
+    DT::replaceData(proxy, lexico_ec_table(t), resetPaging = FALSE)  # important
+    #lexico_ec_table(t)
   })
   
   #observador para eliminar palabras
@@ -684,14 +689,42 @@ shinyServer(function(input, output, session) {
     
     if(input$showData)
     {
-        lexico_ec_table() %>%
-        DT::datatable( options = list(pageLength = 10, language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
+        datalexico <- lexico_ec_table() %>%
+        DT::datatable( options = list(pageLength = 10,
+                                      language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
                                                                        info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
                                                                        paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
                        rownames = FALSE,
                        editable = TRUE,
-                       colnames = c("Palabra" = "word", "Valor" = "value")
+                       colnames = c("Palabra" = "word", "Valor" = "value"),
+                       filter = "top"
                        )
+    }
+  )
+  
+ 
+  
+  #evento para obtener nuevo valor y actualizar
+  observeEvent(input$dictionary_ec_cell_edit, {
+    info = input$dictionary_ec_cell_edit
+    #str(info)
+    i = info$row
+    j = info$col+1
+    v = info$value
+    x <- lexico_ec_table()
+    x[i, j] <- DT::coerceValue(v, x[i, j])
+    DT::replaceData(proxy, lexico_ec_table(x), resetPaging = FALSE)  # important
+  })
+  
+  #guardar nuevos cambios
+  observeEvent(input$save_btn,{
+    
+    #asignacion a variable global con <<
+    lexico_ec <<- lexico_ec_table() %>% select(word, value)  
+    
+    lexico_ec %>%
+    write.csv(file="lexico_ec_custom.csv", row.names = FALSE )
+    
     }
   )
   

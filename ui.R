@@ -238,6 +238,7 @@ body <- dashboardBody(
                    checkboxInput("showData", "Mostrar datos", value = FALSE),
                    actionButton("add_btn", "Agregar"),
                    actionButton("delete_btn", "Eliminar"),
+                   actionButton("save_btn", "Guardar"),
                    br(),
                    br(),
                    DT::dataTableOutput(output = "dictionary_ec")
