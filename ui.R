@@ -244,7 +244,17 @@ body <- dashboardBody(
                    DT::dataTableOutput(output = "dictionary_ec")
                    
           ),
-          tabPanel(title = "Diccionario cambio de sentimientos")
+          tabPanel(title = "Diccionario cambio de sentimientos",
+                   br(),
+                   checkboxInput("showDataShifValence", "Mostrar datos", value = FALSE),
+                   actionButton("add_btnShiftValence", "Agregar"),
+                   actionButton("delete_btnShiftValence", "Eliminar"),
+                   actionButton("save_btnShiftValence", "Guardar"),
+                   br(),
+                   br(),
+                   DT::dataTableOutput(output = "dictionary_ec_ShiftValence")
+                   
+                   )
         )
       ),
     

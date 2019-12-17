@@ -102,11 +102,18 @@ createData <- function(tweets){
   tweetsUnion<- tweetsUnion %>%
     mutate(Genero = apply(tweetsUnion, 1, FUN = fixGender))
   
-  tweetsUnion<- tweetsUnion %>%
-    mutate(Genero = ifelse(Genero == "female", "Mujer", Genero)) 
+  tweetsUnion <- tweetsUnion %>% 
+    mutate(Genero =  apply(tweetsUnion, 1, FUN = listToCharacterGenero)) 
   
-  tweetsUnion<- tweetsUnion %>%
-    mutate(Genero = ifelse(Genero == "male", "Hombre", Genero))
+  tweetsUnion$Genero <- as.character(tweetsUnion$Genero)
+  tweetsUnion$Genero[tweetsUnion$Genero == "female"] <- "Mujer"
+  tweetsUnion$Genero[tweetsUnion$Genero == "male"] <- "Hombre"
+  
+  # tweetsUnion<- tweetsUnion %>%
+  #   mutate(Genero = ifelse(Genero == "female", "Mujer", Genero)) 
+  # 
+  # tweetsUnion<- tweetsUnion %>%
+  #   mutate(Genero = ifelse(Genero == "male", "Hombre", Genero))
   
   # tweetsUnion<- tweetsUnion %>%
   #   mutate(Ciudad = ifelse(Ciudad == "" || nchar(Ciudad) == 0, "ND", tweetsUnion$Ciudad)) 
@@ -158,6 +165,11 @@ fixGender <- function(x){
   
 }
 
+#convertir lista a caracter, obteniedo el primer valor
+listToCharacterGenero <- function(listGenero){
+  as.character(listGenero$Genero[[1]][1]) #de la lista selecciona el primero
+  
+}
 
 #crear corpus
 createCorpus <- function(text){
@@ -190,14 +202,14 @@ cleanDataTweets <- function(tweetText){
   
   opinionText$text <- gsub("[[:cntrl:]]", " ", opinionText$text)
   opinionText$text <- tolower(opinionText$text)
-  opinionText$text <- removeWords(opinionText$text, words = stopwords("spanish"))
+  opinionText$text <- removeWords(opinionText$text, words = stopwords("spanish")[c(-16, -263)])
   opinionText$text <- removeWords( opinionText$text, words = c("usted", "pues", "tal", "tan", "así", "dijo", "cómo", "sino", "entonces", "aunque", "don", "doña"))
   opinionText$text <- removePunctuation(opinionText$text)
   opinionText$text <- removeNumbers(opinionText$text)
   opinionText$text <- stripWhitespace(opinionText$text)
   
-  tweetCleanText.df <- opinionText %>% select(text)
-  write.csv(tweetCleanText.df, "ParoTextoLimpio.csv")
+  #tweetCleanText.df <- opinionText %>% select(text)
+  #write.csv(tweetCleanText.df, "ParoTextoLimpio.csv")
   
   
   return(opinionText$text)

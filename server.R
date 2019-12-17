@@ -9,6 +9,7 @@
 library(leaflet)
 library(leaflet.extras)
 library(ggplot2)
+library(ggthemes)
 library(shiny)
 library(genderizeR)
 library(tools)
@@ -28,8 +29,8 @@ createTwitterConection()
 shinyServer(function(input, output, session) {
   
   #habilitar seguimiento
- # debugonce(createCorpus)
-  #debugonce(createDataLocal)
+ #debugonce(createCorpus)
+ #debugonce(calcSentiment)
 
   #mapas datos locales (offline)
   output$geoMapLocal <- renderLeaflet({
@@ -199,7 +200,7 @@ shinyServer(function(input, output, session) {
       
       
       #importar datos cargados
-      #write.csv(datosLocalesTweets$data, "ParoPolaridad.csv")
+      write.csv(datosLocalesTweets$data, "ParoPolaridad.csv")
     
       
       #permite establecer el nombre de la columna inicial para las columnas antiguas y las nuevas del calculo polaridad
@@ -459,7 +460,7 @@ shinyServer(function(input, output, session) {
                  y = Polaridad, fill = Sentimiento)) +
         geom_bar(stat = "identity") +
         scale_fill_manual(values=c("red", "green", "gray")) +
-        labs(title = "Análisis de sentimiento \n Valoración positiva o negativa",
+        labs(title = "Análisis de sentimientos \n Valoración positiva o negativa",
              x = "Sentimiento", y = "Frecuencia") +
         geom_text(aes(label = Polaridad),
                   vjust = 1.5, color = "black",
@@ -614,19 +615,20 @@ shinyServer(function(input, output, session) {
       ggplot(tweetsDataWithoutCleanText(),
              aes(x = createdDate,
                  y = CalculoPolaridad)) +
-        geom_line(stat = "identity", color = "blue") +
+        geom_smooth(alpha=.1)+
+        geom_hline(yintercept = 0, color = "red") +
         
-        labs(title = "Análisis de sentimiento por fecha", 
+        labs(title = "Análisis de sentimientos por fecha", 
              x = "Fecha", y = "Polaridad") +
         # geom_text(aes(label = Polarity),
         #           vjust = 1.5, color = "blue",
         #           size = 5) +
-        
-        theme(plot.title = element_text(hjust = 0.5),
-              axis.text = element_text(size=12),
-              axis.title = element_text(size=14,face = "bold"),
-              title = element_text(size=20,face = "bold"),
-              legend.position = "right")
+        theme_gdocs()
+        # theme(plot.title = element_text(hjust = 0.5),
+        #       axis.text = element_text(size=12),
+        #       axis.title = element_text(size=14,face = "bold"),
+        #       title = element_text(size=20,face = "bold"),
+        #       legend.position = "right")
       
       
     }
@@ -638,14 +640,37 @@ shinyServer(function(input, output, session) {
   
   output$genPolarityPlot <-renderPlot({
     if(input$calcGeoSentiment){
-      qplot(Polarity, data = tweetsDataWithoutCleanText(), geom = "bar", binwith = 2,
-            xlab = "Setimiento", ylab = "Polaridad") + 
-        theme_classic()  +
-        facet_wrap(~Genero)
      
-      
+      # qplot(polaridad, data = tweetsDataWithoutCleanText(), geom = "bar", binwith = 2,
+      #       xlab = "Setimiento", ylab = "Polaridad") + 
+      #   theme_classic()  +
+      #   facet_wrap(~Genero,  scales = "free")
+      # 
+      tweetsDataWithoutCleanText() %>%
+        #filter(n>10 ) %>%
+        arrange(Polaridad) %>%
+        ggplot( aes(x = element_id, y = factor(element_id), fill = Polaridad)) +
+        geom_col( position = "identity" , colour = "black", size = 0.25, width = 0.5) +
+        #scale_fill_manual(values = c("#FFDDDD", "#CCEEFF"), guide = FALSE) +
+        # ylim(c(3,140)) +
+        facet_wrap(~Genero, scales = "free")+
+        coord_flip()+
+        labs(title = "Sentimientos por genero", x = "Palabras", y = "Número de palabras")
       
     }
+  })
+  
+  #digrama por ciudad
+  output$cityPolarityPlot <- renderPlot({
+    if(input$calcGeoSentiment){
+      
+        tweetsDataWithoutCleanText() %>%
+        ggplot( aes(x= Genero, y = CalculoPolaridad, col = Polaridad), ylim = c(-1,1) )+
+        geom_jitter()+
+        labs(title = "Análisis de sentimientos por ciudad", x = "Genero", y = "Polaridad") +
+        facet_wrap(~toupper(Ciudad), scales = "free")
+      }
+    
   })
   
   # creacion descripcion de la ayuda
@@ -702,7 +727,7 @@ shinyServer(function(input, output, session) {
     }
   )
   
- 
+  
   
   #evento para obtener nuevo valor y actualizar
   observeEvent(input$dictionary_ec_cell_edit, {
@@ -727,6 +752,32 @@ shinyServer(function(input, output, session) {
     
     }
   )
+  
+  
+  #configuracion diccionario cambio de sentimiento
+  
+  dictionaryShiftValence_ec <- reactiveVal(lexicoCambioSentimiento)
+  
+  output$dictionary_ec_ShiftValence <- DT::renderDataTable(
+    
+    if(input$showDataShifValence)
+    {
+      dictionaryShiftValence_ec() %>%
+        DT::datatable( options = list(pageLength = 10,
+                                      language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
+                                                      info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                                                      paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
+                       rownames = FALSE,
+                       editable = TRUE,
+                       colnames = c("Palabra" = "x", "Valor" = "y"),
+                       filter = "top"
+        )
+    }
+  )
+  
+  
+  
+  
   
   
 })
