@@ -200,7 +200,7 @@ shinyServer(function(input, output, session) {
       
       
       #importar datos cargados
-      write.csv(datosLocalesTweets$data, "ParoPolaridad.csv")
+      write.csv(datosLocalesTweets$data, "SupermaxiPolaridad_mejoraDiccionario.csv")
     
       
       #permite establecer el nombre de la columna inicial para las columnas antiguas y las nuevas del calculo polaridad

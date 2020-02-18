@@ -195,21 +195,23 @@ cleanDataTweets <- function(tweetText){
   #opinionText$text.x  <- iconv(opinionText$text.x , "latin1", "ASCII", sub="")  #elimina las ñ, tildes
   opinionText$text <- chartr('áéíóúñ','aeioun', opinionText$text)
   
+  #sentencia para guardar datos limpios
   #tweetCleanText.df <- opinionText %>% select(text)
-  #write.csv(tweetCleanText.df, "LeninTextoLimpio.csv")
+  #write.csv(tweetCleanText.df, "SupermaxiLimpio.csv")
   
   #nuevas carateristicas limpieza
   
   opinionText$text <- gsub("[[:cntrl:]]", " ", opinionText$text)
   opinionText$text <- tolower(opinionText$text)
-  opinionText$text <- removeWords(opinionText$text, words = stopwords("spanish")[c(-16, -263)])
+  opinionText$text <- removeWords(opinionText$text, words = stopwords("spanish")[c(-16, -263, -220, -11, -5, -217)])
   opinionText$text <- removeWords( opinionText$text, words = c("usted", "pues", "tal", "tan", "así", "dijo", "cómo", "sino", "entonces", "aunque", "don", "doña"))
   opinionText$text <- removePunctuation(opinionText$text)
   opinionText$text <- removeNumbers(opinionText$text)
   opinionText$text <- stripWhitespace(opinionText$text)
   
-  #tweetCleanText.df <- opinionText %>% select(text)
-  #write.csv(tweetCleanText.df, "ParoTextoLimpio.csv")
+  #sentencia para guardar datos limpios
+  tweetCleanText.df <- opinionText %>% select(text)
+  write.csv(tweetCleanText.df, "SupermaxiLimpio.csv")
   
   
   return(opinionText$text)
