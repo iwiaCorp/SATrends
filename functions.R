@@ -209,9 +209,9 @@ cleanDataTweets <- function(tweetText){
   opinionText$text <- removeNumbers(opinionText$text)
   opinionText$text <- stripWhitespace(opinionText$text)
   
-  #sentencia para guardar datos limpios
-  tweetCleanText.df <- opinionText %>% select(text)
-  write.csv(tweetCleanText.df, "SupermaxiLimpio.csv")
+  ###########sentencia para guardar datos limpios########
+  #tweetCleanText.df <- opinionText %>% select(text)
+  #write.csv(tweetCleanText.df, "LeninLimpio_12032020.csv")
   
   
   return(opinionText$text)
@@ -346,13 +346,14 @@ calcSentiment <- function(tweetsData, searchedTweet){
   valenceShiftEC <- data.frame(words = tolower(lexicoCambioSentimiento$x),
                                polarity = lexicoCambioSentimiento$y,
                                stringsAsFactors = FALSE)
-  myValenceShiftEC <- as_key(valenceShiftEC)
-  
+  #myValenceShiftEC <- as_key(valenceShiftEC)
+  myValenceShiftEC <- as_key(valenceShiftEC, comparison = myKeyCustomEC, sentiment = FALSE)
   
 
   if(is_key(myKeyCustomEC) == TRUE & is_key(myValenceShiftEC) == TRUE){
  
-    result <- sentiment(tweets, polarity_dt = myKeyCustomEC, valence_shifters_dt = myValenceShiftEC )
+    result <- sentiment(tweets, polarity_dt = myKeyCustomEC, valence_shifters_dt = myValenceShiftEC,
+                        n.before = 5, n.after = 3)
 
   }
   
