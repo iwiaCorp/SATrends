@@ -254,7 +254,23 @@ body <- dashboardBody(
                    br(),
                    DT::dataTableOutput(output = "dictionary_ec_ShiftValence")
                    
-                   )
+                   ),
+          tabPanel(title = "Cargar  nuevas palabras",
+                   br(),
+                   fileInput("fileLoadedNewWords", label = "Archivo",
+                             buttonLabel = "Cargar archivo",
+                             accept =c("csv",
+                                       "text/comma-separated-values",
+                                       ".csv")),
+                   checkboxInput("showDataNewDictionary", "Mostrar datos", value = FALSE),
+                   actionButton("add_btnNewWord", "Agregar"),
+                   actionButton("delete_btnNewWord", "Eliminar"),
+                   actionButton("save_btnNewWord", "Guardar"),
+                   br(),
+                   br(),
+                   DT::dataTableOutput(output = "dictionary_ec_NewWords")
+                   
+          )
         )
       ),
     

@@ -199,8 +199,8 @@ shinyServer(function(input, output, session) {
         mutate(polaridad = apply(resultadoGrouped, 1, getPolarityText))
       
       
-      #importar datos cargados
-      write.csv(datosLocalesTweets$data, "SupermaxiPolaridad_mejoraDiccionario.csv")
+      ######importar datos cargados##########
+      write.csv(datosLocalesTweets$data, "LeninPolaridad_mejora_04062020.csv")
     
       
       #permite establecer el nombre de la columna inicial para las columnas antiguas y las nuevas del calculo polaridad
@@ -775,9 +775,41 @@ shinyServer(function(input, output, session) {
     }
   )
   
+  ####logica cargar nuevas palabras####
+  #carga datos de archivo
+  dataNewWordsFileLoaded <- eventReactive(input$fileLoadedNewWords,{
+    req(input$fileLoadedNewWords)
+    inFile <- read.csv(input$fileLoadedNewWords$datapath )
+    
+    if(nrow(inFile) == 0)
+      return(NULL)
+    
+    #crea dato local
+    newWordsLocal$data <- inFile %>%
+      createNewWords()
+    
+    return(newWordsLocal$data)
+  })
   
+  #valor reactivo para palabras locales cargados
+  newWordsLocal <- reactiveValues(
+    data = NULL
+  )
   
-  
+  output$dictionary_ec_NewWords <- DT::renderDataTable(
+    
+    if(nrow(dataNewWordsFileLoaded()) != 0 & input$showDataNewDictionary)
+    {
+     
+      newWordsLocal$data %>%
+        DT::datatable( options = list(pageLength = 10, language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
+                                                                       info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                                                                       paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
+                       rownames = FALSE,
+                       editable = TRUE,
+                       colnames = c("Palabra" = "Palabra", "Contador palabra" = "w", "Polaridad (-1 hasta 1)" = "polarity" ))
+    }
+  )
   
   
 })

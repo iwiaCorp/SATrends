@@ -6,6 +6,7 @@ library(tidyr)
 library(sentimentr)
 library(tm)
 library(tidytext)
+library(stringr)
 
 #funciones basicas 
 
@@ -677,6 +678,120 @@ wordPercentSentiment <- function(textData){
     geom_text(aes(hjust = 1.3, label = round(perc, 2))) + 
     coord_flip() +
     labs(title = "Proporción de uso de cada palabra. \nDiez palabras más frecuentes", x = "Palabras", y = "Porcentaje de uso")
+  
+}
+
+createNewWords <- function(newPhrase){
+  
+  
+  #verifica valores na y reemplaza   
+  newPhrase[is.na(newPhrase)] <- "ND"
+  
+  #newPhrase<- newPhrase %>%
+   # mutate(element_id =  row_number())
+  
+  #cities_ec$nombre <- tolower(cities_ec$nombre)
+  
+  #tweets <- tweets %>%
+  #  left_join( cities_ec, by = c("Ciudad" = "nombre"))
+  
+  cleanData <- cleanNewWordsDataTweet(newPhrase$text)
+  
+  corpus <- createNewWordsCorpus(cleanData)
+  
+  cleanCorpus <- cleanNewWordsCorpus(corpus)
+  
+  tdm <- createTDMAndMatrix(cleanCorpus)
+  
+  words.df <- createDF(tdm)
+  
+  newWords <- extractNewWords(words.df)
+  
+  
+  return(newWords)
+  
+}
+
+cleanNewWordsDataTweet <- function (text){
+  clean_tweet = gsub("&amp", "", text)
+  clean_tweet = gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", clean_tweet)
+  clean_tweet = gsub("@\\w+", "", clean_tweet)
+  clean_tweet = gsub("[[:punct:]]", "", clean_tweet)
+  clean_tweet = gsub("[[:digit:]]", "", clean_tweet)
+  clean_tweet = gsub("http\\w+", "", clean_tweet)
+  clean_tweet = gsub("[ \t]{2,}", "", clean_tweet)
+  clean_tweet = gsub("^\\s+|\\s+$", "", clean_tweet) 
+  
+  clean_tweet <- str_replace_all(clean_tweet," "," ")
+  # Get rid of URLs
+  clean_tweet <- str_replace_all(clean_tweet, fixed("http://t.co/[a-z,A-Z,0-9]*{8}"),"")
+  # Take out retweet header, there is only one
+  clean_tweet <- str_replace(clean_tweet,"RT @[a-z,A-Z]*: ","")
+  # Get rid of hashtags
+  clean_tweet <- str_replace_all(clean_tweet,"#[a-z,A-Z]*","")
+  # Get rid of references to other screennames
+  clean_tweet <- str_replace_all(clean_tweet,"@[a-z,A-Z]*","") 
+}
+
+createNewWordsCorpus <- function(dataTweetClean){
+  
+  corpusIntern <- iconv(dataTweetClean, to = 'UTF-8-mac')
+  
+  corpusIntern <- Corpus(VectorSource(corpusIntern))
+}
+
+removeURL <- function(x) gsub("http[[:alnum:]]*", '', x)
+removeEmoticons  <- function(x) iconv(x, "UTF-8", "latin1", sub="") #mantiene las ñ y borrar emoticons
+
+cleanNewWordsCorpus <- function(corpus){
+  #convertir a minuscula
+  cleanCorpus <- tm_map(corpus, tolower)
+  #quitar la frase o texto de busqueda para evitar redundancia en el texto
+  #cleanCorpus <- tm_map(cleanCorpus, removeWords, c("supermaxi")) #este debe ir antes de quitar las puntuaciones
+  #quitar caracteres de puntuacion
+  cleanCorpus <- tm_map(cleanCorpus, removePunctuation)
+  #quitar numeros
+  cleanCorpus <- tm_map(cleanCorpus, removeNumbers)
+  
+  #remover palabras sin mucho significado y relevancia para el análisis 
+  cleanCorpus <- tm_map(cleanCorpus, removeWords, stopwords("es"))
+  cleanCorpus <- tm_map(cleanCorpus, content_transformer(removeURL))
+  cleanCorpus <- tm_map(cleanCorpus, content_transformer(removeEmoticons))
+  
+}
+
+createTDMAndMatrix <- function(cleanCorpus){
+  tmd <- TermDocumentMatrix(cleanCorpus)
+  
+  tmd <- as.matrix(tmd)
+}
+
+createDF <- function(tdm){
+  w <- rowSums(tdm)
+  palabras <- as.data.frame(w) #esto inicia el conjunto palabras
+  
+  palabras <- palabras %>%
+    mutate(word = rownames(palabras))
+  
+  palabras <- palabras %>%
+    mutate(polarity = "")
+  
+   
+  
+  
+}
+
+extractNewWords <- function(words.df){
+  
+  palabrasNoLexico <- as.data.frame(setdiff(words.df$word, lexico_ec_table$word))
+  
+  #write_csv(palabrasNoLexico, path = "PalabrasDataSupermaxiNoLexico.csv") 
+  
+  colnames(palabrasNoLexico) <- "Palabra"
+  PalabrasValorNoLexico <- palabrasNoLexico %>%
+    left_join( words.df, by = c("Palabra" = "word"))
+  
+  #write_csv(PalabrasValorNoLexico, path = "PalabrasValorDataSupermaxiLexico.csv") 
   
 }
 
