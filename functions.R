@@ -253,7 +253,11 @@ removeEmoticons  <- function(x) iconv(x, "UTF-8", "latin1", sub="")
 #estructurar los datos del tweet en una matriz, recibe un vector corpus limpio
 structureDataTweet <- function(cleanCorpus){
   tdm <- TermDocumentMatrix(cleanCorpus)
+ 
   tdm <- as.matrix(tdm)
+  #################guardar TDM archivo##############
+  ##tdm %>%
+  ##  write.csv(file="ParoTDM_01072020.csv", row.names = TRUE )
 }
 
 #debido a que la grafica de barra puede volverse muy lento al tratar de graficar cada palabra, vamos a crear subconjuntos 
@@ -762,7 +766,9 @@ cleanNewWordsCorpus <- function(corpus){
 
 createTDMAndMatrix <- function(cleanCorpus){
   tmd <- TermDocumentMatrix(cleanCorpus)
-  
+  ###enviar archivo el TDM creado
+  #tdm %>%
+   # write.csv(file="SupermaxiTDM_01072020.csv", row.names = TRUE )
   tmd <- as.matrix(tmd)
 }
 

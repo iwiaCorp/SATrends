@@ -23,16 +23,46 @@ localData <- base64enc::dataURI(file="localData.png", mime="image/png")
 analisysScreen <- base64enc::dataURI(file="analisysScreen.png", mime="image/png")
 
 
+helpPopup <- function(content, title = NULL) {
+  a(href = "#",
+    class = "popover-link",
+    `data-toggle` = "popover",
+    `data-title` = title,
+    `data-content` = content,
+    `data-html` = "true",
+    `data-trigger` = "hover",
+    icon("question-circle")
+  )
+}
+
+# Set up a button to have an animated loading indicator and a checkmark
+# for better user experience
+# Need to use with the corresponding `withBusyIndicator` server function
+withBusyIndicator <- function(button) {
+  id <- button[['attribs']][['id']]
+  tagList(
+    button,
+    span(
+      class = "btn-loading-container",
+      `data-for-btn` = id,
+      hidden(
+        img(src = "ajax-loader-bar.gif", class = "btn-loading-indicator"),
+        icon("check", class = "btn-done-indicator")
+      )
+    )
+  )
+}
+
 header <- dashboardHeader(dropdownMenuOutput("task_menu" ), title = "Products & Services Trends", titleWidth =  280) 
                           
 sideBar <- dashboardSidebar( width = 280,
   
   sidebarMenu( 
     
-    menuItem("Datos locales", tabName = "analisys"),
-    menuItem("Geolocalización", tabName = "geolocalizacion"),
-    menuItem("Configuración", tabName = "configuration"),
-    menuItem("Ayuda", tabName = "help")
+    menuItem("Datos locales", tabName = "analisys", icon  = icon("table")  ),
+    menuItem("Datos en línea", tabName = "geolocalizacion", icon = icon("table")),
+    menuItem("Configuración", tabName = "configuration", icon  = icon("cog")),
+    menuItem("Ayuda", tabName = "help", icon = icon("info-circle"))
   )
   
   
@@ -43,9 +73,9 @@ body <- dashboardBody(
   
   tabItems( 
     tabItem(tabName = "analisys",
-            titlePanel("Carga de archivo", windowTitle = "Análisis sentimiento Twitter"),
+            titlePanel("Carga de archivo", windowTitle = "Análisis de sentimientos en Twitter"),
             tabsetPanel(type = "tabs", id= "tabsetPanelLocalData",
-                        tabPanel(title ="Análisis sentimiento", value = 1,
+                        tabPanel(title ="Análisis de sentimientos", value = 1, class = "fade in", 
                                  wellPanel(
                                    fluidRow(
                                      column( width = 12,
@@ -53,9 +83,20 @@ body <- dashboardBody(
                                                   
                                                   fileInput("fileLoaded", label = "Archivo",
                                                             buttonLabel = "Cargar archivo",
+                                                           # div(
+                                                          #    helpPopup('Este es un archivo csv con la información descargada de comentarios.')
+                                                          #  ),
+                                                            
                                                             accept =c("csv",
                                                                       "text/comma-separated-values",
                                                                       ".csv"))
+                                                  # withBusyIndicator(
+                                                  #   actionButton(
+                                                  #     "uploadFilesBtn",
+                                                  #     "Upload data",
+                                                  #     class = "btn-primary"
+                                                  #   )
+                                                  # )
                                                   #radioButtons("showData", "Mostrar datos", choices = c("Si"=1, "No"=2), selected = 2)
                                              )
                                      ))
@@ -81,16 +122,16 @@ body <- dashboardBody(
                                    
                                    
                                  ),
-                                 titlePanel("Análisis general"),
+                                 titlePanel("Resultados"),
                                  tabsetPanel(type = "tabs", id= "tabsetLocalResult", 
-                                             tabPanel(title = "Trazado a nivel de oración", 
+                                             tabPanel(title = "Trazado a nivel de oración", icon = icon("chart-line"), 
                                              wellPanel(
                                                fluidRow(
                                                  
                                                  tableOutput(outputId = "dataTweets"),
                                                  plotOutput(outputId = "scatterplot")
                                                ))),
-                                             tabPanel(title = "Diagrama de barras", 
+                                             tabPanel(title = "Diagrama de barras", icon  = icon("bar-chart"),
                                                       wellPanel(
                                                         fluidRow(
                                                           plotOutput(outputId = "barPlotPolarity")
@@ -98,42 +139,42 @@ body <- dashboardBody(
                                                       )
                                                       
                                              ), 
-                                             tabPanel(title = "Matriz de término de documentos", 
+                                             tabPanel(title = "Matriz de término de documentos", icon = icon("table"),
                                                       wellPanel(
                                                         fluidRow(
                                                           plotOutput(outputId = "barPlotTDM")
                                                         ))
                                                       
                                              ), 
-                                             tabPanel(title = "Nube de palabras", 
+                                             tabPanel(title = "Nube de palabras", icon  = icon("cloud"),
                                                       wellPanel(
                                                         fluidRow(
                                                           plotOutput(outputId = "wordCloudPlot")
                                                         ))
                                                       
                                              ),
-                                             tabPanel(title = "Geolocalización", 
+                                             tabPanel(title = "Geolocalización",  icon  = icon("globe-americas"),
                                                       wellPanel(
                                                         fluidRow(
                                                           leafletOutput(outputId = "geoMapLocal")
                                                         ))
                                                       
                                              ),
-                                             tabPanel(title = "Mapa de calor", 
+                                             tabPanel(title = "Mapa de calor", icon = icon("fire"),
                                                       wellPanel(
                                                         fluidRow(
                                                           plotOutput(outputId = "heatMapLocalData")
                                                         ))
                                                       
                                              ),
-                                             tabPanel(title = "Grafico Lollipop", 
+                                             tabPanel(title = "Grafico Lollipop", icon = icon("project-diagram"),
                                                       wellPanel(
                                                         fluidRow(
                                                           plotOutput(outputId = "lollipopPlot")
                                                         ))
                                                       
                                              ),
-                                             tabPanel(title = "Conteo palabras de sentimiento", 
+                                             tabPanel(title = "Conteo palabras de sentimiento", icon = icon("font"),
                                                       wellPanel(
                                                         fluidRow(
                                                           plotOutput(outputId = "sentimenWordCountsPlot")
@@ -153,6 +194,8 @@ body <- dashboardBody(
                                   
                                      h5(textOutput("descriptionTable")),
                                      br(),
+                                     downloadButton("saveMetaBtn", "Descargar detalle de archivo."),
+                                     br(), br(),
                                      fluidRow(
                                         DT::dataTableOutput(outputId = "twetterDataLocal")
                                        )
@@ -192,7 +235,7 @@ body <- dashboardBody(
                                    
                                  ),
                                 
-                                 titlePanel("Análisis general", windowTitle = "Resultado análisis sentimiento"),
+                                 titlePanel("Resultados", windowTitle = "Resultado análisis sentimiento"),
                                  tabsetPanel(type = "tabs", id= "tabsetResult", 
                                              tabPanel(title = "General", 
                                                       

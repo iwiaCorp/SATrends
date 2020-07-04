@@ -127,11 +127,11 @@ shinyServer(function(input, output, session) {
     {
       #language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json')
         datosLocalesTweets$data[,c(-9:-10)] %>%
-        DT::datatable( options = list(pageLength = 10, language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
+        DT::datatable( options = list(scrollX=TRUE, scrollCollapse=TRUE, scrollY = 500, pageLength = 10, language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
                                                                        info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
                                                                        paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
                        rownames = FALSE,
-                       
+                       class = 'cell-border stripe',
                       colnames = c("Texto" = "text", "Fecha tweet" = "createdDate",
                                    "Nombre usuario"= "userName", "Nombre" = "Nombre", "Apellido" = "Apellido", "Ciudad" = "Ciudad",
                                     "País" = "Pais", "Género" = "Genero"))
@@ -199,8 +199,8 @@ shinyServer(function(input, output, session) {
         mutate(polaridad = apply(resultadoGrouped, 1, getPolarityText))
       
       
-      ######importar datos cargados##########
-      write.csv(datosLocalesTweets$data, "LeninPolaridad_mejora_04062020.csv")
+      ######exportar datos cargados y con polaridad##########
+      #write.csv(datosLocalesTweets$data, "ParoPolaridad_02072020.csv")
     
       
       #permite establecer el nombre de la columna inicial para las columnas antiguas y las nuevas del calculo polaridad
@@ -802,12 +802,21 @@ shinyServer(function(input, output, session) {
     {
      
       newWordsLocal$data %>%
-        DT::datatable( options = list(pageLength = 10, language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
+        DT::datatable(  options = list(pageLength = 10, language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
                                                                        info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
                                                                        paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
                        rownames = FALSE,
                        editable = TRUE,
                        colnames = c("Palabra" = "Palabra", "Contador palabra" = "w", "Polaridad (-1 hasta 1)" = "polarity" ))
+    }
+  )
+  
+  # download plate summary
+  output$saveMetaBtn <- downloadHandler(
+    filename = "DatosLocales-polaridad.csv",
+    
+    content = function(file) {
+      write.csv(datosLocalesTweets$data , file, row.names = FALSE)
     }
   )
   
