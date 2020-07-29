@@ -185,18 +185,18 @@ createCorpus <- function(text){
 cleanDataTweets <- function(tweetText){
   opinionText <- tweetText
   opinionText$text <- gsub("(RT|via)|((?:\\b\\w*@\\w+)+)", "", opinionText$text)
-  opinionText$text <- gsub("\\n", "", opinionText$text )
+  opinionText$text <- gsub("\\n", " ", opinionText$text )
   opinionText$text <- gsub("@\\w+", "", opinionText$text )
-  opinionText$text <- gsub("[[:punct:]]", "", opinionText$text)
+  opinionText$text <- gsub("[[:punct:]]", " ", opinionText$text)
   opinionText$text <- gsub("[[:digit:]]", "", opinionText$text)
   opinionText$text <- gsub("http\\w+", "", opinionText$text)
   opinionText$text <- gsub("(f|ht)tp(s?)://(.*)[.][a-z]+", "", opinionText$text)
   #opinionText$text.x <- iconv(opinionText$text.x, to="ASCII//TRANSLIT")
-  opinionText$text  <- iconv(opinionText$text, "UTF-8", "latin1", sub="") #mantiene las ñ y borrar emoticons
+  #opinionText$text  <- iconv(opinionText$text, "UTF-8", "latin1", sub="") #mantiene las ñ y borrar emoticons
   #opinionText$text.x  <- iconv(opinionText$text.x , "latin1", "ASCII", sub="")  #elimina las ñ, tildes
-  opinionText$text <- chartr('áéíóúñ','aeioun', opinionText$text)
   
-  #sentencia para guardar datos limpios
+  
+  ##########sentencia para guardar datos limpios######
   #tweetCleanText.df <- opinionText %>% select(text)
   #write.csv(tweetCleanText.df, "SupermaxiLimpio.csv")
   
@@ -204,15 +204,16 @@ cleanDataTweets <- function(tweetText){
   
   opinionText$text <- gsub("[[:cntrl:]]", " ", opinionText$text)
   opinionText$text <- tolower(opinionText$text)
-  opinionText$text <- removeWords(opinionText$text, words = stopwords("spanish")[c(-16, -263, -220, -11, -5, -217)])
+  opinionText$text <- removeWords(opinionText$text, words = stopwords("spanish")[c(-16, -263, -220, -11, -5, -217, -44, -55)])
   opinionText$text <- removeWords( opinionText$text, words = c("usted", "pues", "tal", "tan", "así", "dijo", "cómo", "sino", "entonces", "aunque", "don", "doña"))
   opinionText$text <- removePunctuation(opinionText$text)
   opinionText$text <- removeNumbers(opinionText$text)
   opinionText$text <- stripWhitespace(opinionText$text)
+  opinionText$text <- chartr('áéíóúñ','aeioun', opinionText$text)
   
   ###########sentencia para guardar datos limpios########
   #tweetCleanText.df <- opinionText %>% select(text)
-  #write.csv(tweetCleanText.df, "LeninLimpio_12032020.csv")
+  #write.csv(tweetCleanText.df, "paroLimpio_04072020.csv")
   
   
   return(opinionText$text)

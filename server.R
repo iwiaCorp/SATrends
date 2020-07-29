@@ -13,6 +13,7 @@ library(ggthemes)
 library(shiny)
 library(genderizeR)
 library(tools)
+library(shinyjs)
 source("./Connection.R")
 source("./LexiconCustomization_EC.R")
 source("./functions.R")
@@ -30,38 +31,42 @@ shinyServer(function(input, output, session) {
   
   #habilitar seguimiento
  #debugonce(createCorpus)
- #debugonce(calcSentiment)
+# debugonce(calcSentiment)
+  
+  # observeEvent(input$fileLoaded, ignoreNULL = FALSE, {
+  #   toggleState("uploadFilesButton", !is.null(input$fileLoaded))
+  # })
 
   #mapas datos locales (offline)
-  output$geoMapLocal <- renderLeaflet({
-    req(nrow(datosLocalesTweets$data) != 0)
-    {
-      dataLocal <- datosLocalesTweets$data %>%
-          filter(datosLocalesTweets$data$latitud != 0, datosLocalesTweets$data$longitud != 0 )
-        
-      leaflet(data = dataLocal, options = leafletOptions(dragging = TRUE,
-                                       minZoom = 7,
-                                       maxZoom = 100)) %>%
-        addTiles() %>%
-        addSearchOSM() %>%
-        addResetMapButton() %>%
-        addProviderTiles("CartoDB.Positron") %>%
-        setView(lng=-78.78442, lat=-0.94434, zoom = 7)  %>%
-        addCircles(lat = ~latitud,
-                   lng = ~longitud,
-                   stroke = FALSE,
-                   popup = ~Ciudad,
-                   color = ~colorFactor(palette = "Set3", domain = datosLocalesTweets$data$polaridad),
-                   radius = 100,
-                   fillOpacity = 0.5) %>%
-        addLegend(position = "bottomright",
-                  title="Sentimiento",
-                  pal = colorFactor(palette = "Set3", domain = datosLocalesTweets$data$polaridad),
-                  values = ~polaridad,
-                  opacity = 1)
-    }
-                
-  })
+  # output$geoMapLocal <- renderLeaflet({
+  #   req(nrow(datosLocalesTweets$data) != 0)
+  #   {
+  #     dataLocal <- datosLocalesTweets$data %>%
+  #         filter(datosLocalesTweets$data$latitud != 0, datosLocalesTweets$data$longitud != 0 )
+  #       
+  #     leaflet(data = dataLocal, options = leafletOptions(dragging = TRUE,
+  #                                      minZoom = 7,
+  #                                      maxZoom = 100)) %>%
+  #       addTiles() %>%
+  #       addSearchOSM() %>%
+  #       addResetMapButton() %>%
+  #       addProviderTiles("CartoDB.Positron") %>%
+  #       setView(lng=-78.78442, lat=-0.94434, zoom = 7)  %>%
+  #       addCircles(lat = ~latitud,
+  #                  lng = ~longitud,
+  #                  stroke = FALSE,
+  #                  popup = ~Ciudad,
+  #                  color = ~colorFactor(palette = "Set3", domain = datosLocalesTweets$data$polaridad),
+  #                  radius = 100,
+  #                  fillOpacity = 0.5) %>%
+  #       addLegend(position = "bottomright",
+  #                 title="Sentimiento",
+  #                 pal = colorFactor(palette = "Set3", domain = datosLocalesTweets$data$polaridad),
+  #                 values = ~polaridad,
+  #                 opacity = 1)
+  #   }
+  #               
+  # })
   
   #mapas en linea 
   output$EcuadorMap <- renderLeaflet({
@@ -185,8 +190,8 @@ shinyServer(function(input, output, session) {
   resultadoSentimiento <- eventReactive(input$calcSentiment, {
     req(dataFileLoaded())
     {
-      resultado <- calcSentiment( datosLocalesTweets$data, input$geoLocalSearch)
-      
+      #resultado <- calcSentiment( datosLocalesTweets$data, input$geoLocalSearch) #old
+      resultado <- calcSentiment( datosLocalesTweets$data, '') #new
       #agrupar
       resultadoGrouped <- data.frame(resultado)
       resultadoGrouped <- resultadoGrouped %>% group_by(element_id) %>% summarise(sentiment = mean(sentiment))
@@ -301,7 +306,8 @@ shinyServer(function(input, output, session) {
     {
       #datos limpios
       cleanDataText$data <- createCorpus(datosLocalesTweets$data$text) %>%
-           cleanDataTweetsV2(input$geoLocalSearch)
+            cleanDataTweetsV2("") #new
+           #cleanDataTweetsV2(input$geoLocalSearch)
       
       #crear corpus
       word <- cleanDataText$data %>%
@@ -323,7 +329,8 @@ shinyServer(function(input, output, session) {
     {
       #crear corpus
       inWordcloud <- createCorpus( datosLocalesTweets$data$text) %>%
-        cleanDataTweetsV2(input$geoLocalSearch) %>%
+        cleanDataTweetsV2('') %>% #new
+        #cleanDataTweetsV2(input$geoLocalSearch) %>% @old
         structureDataTweet() %>%
         calcWordcloud()
       
@@ -331,10 +338,25 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  ####grafica de suavizado######
   output$scatterplot <- renderPlot({
     if(input$calcSentiment){
       #plot(resultadoSentimiento(), ylab = "Valencia emocional", xlab = "Duración del texto", main = "Trazado a nivel de oración")
-      plot(resultadoSentimiento())
+      #plot(resultadoSentimiento())
+      result.df <- data.frame(resultadoSentimiento())
+      result.df  <- result.df  %>% group_by(element_id) %>% summarise(sentiment = mean(sentiment))
+      
+         ggplot(data = result.df, mapping =  aes(x = element_id, y = sentiment), alpha=.4) +
+           geom_point(alpha = 1/25, shape = 21)+
+        geom_smooth(se=T,  color = "blue" ) +
+        geom_hline(yintercept = 0, color = "red", linetype = 2) +
+        ylab("Polaridad")+
+        xlab("Tweets") +
+       # xlim(0,999) 
+        theme_gdocs() +
+        theme(legend.position =   "bottom", legend.direction = "horizontal", legend.box = "vertical")
+      
+      
     }
   })
   
@@ -388,11 +410,11 @@ shinyServer(function(input, output, session) {
    )
   
   #grafico lollipop
-  output$lollipopPlot <- renderPlot(
-    if(nrow(datosLocalesTweets$data) > 0){
-      lollipopPlot(datosLocalesTweets$data)
-    }
-  )
+  # output$lollipopPlot <- renderPlot(
+  #   if(nrow(datosLocalesTweets$data) > 0){
+  #     lollipopPlot(datosLocalesTweets$data)
+  #   }
+  # )
   
   #grafico conteo de palabas de sentimiento
   output$sentimenWordCountsPlot <- renderPlot(
