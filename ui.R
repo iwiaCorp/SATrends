@@ -63,8 +63,8 @@ sideBar <- dashboardSidebar( width = 280,
     
     menuItem("Datos locales", tabName = "analisys", icon  = icon("table")  ),
     menuItem("Datos en línea", tabName = "geolocalizacion", icon = icon("table")),
-    menuItem("Resultados", tabName = "Results", icon  = icon("bar-chart")),
-    menuItem("Configuración", tabName = "configuration", icon  = icon("cog")),
+   # menuItem("Resultados", tabName = "Results", icon  = icon("bar-chart")),
+    menuItem("Configuración de diccionarios", tabName = "configuration", icon  = icon("cog")),
     menuItem("Ayuda", tabName = "help", icon = icon("info-circle"))
   )
 )
@@ -130,12 +130,85 @@ body <- dashboardBody(
                                      ))
                                    
                                    
+                                 ),
+                                 wellPanel(
+                                 
+                                   tabsetPanel(type = "tabs", id= "tabsetLocalResult", 
+                                               tabPanel(title = "Nivel de polaridad por tweets", icon = icon("chart-line"), 
+                                                        wellPanel(
+                                                          fluidRow(
+                                                            
+                                                            tableOutput(outputId = "dataTweets"),
+                                                            #plotOutput(outputId = "scatterplot")
+                                                            box(
+                                                              title = "Tendencia", status = "primary", solidHeader = TRUE,
+                                                              collapsible = T,
+                                                              plotOutput(outputId = "scatterplot", height = 250)
+                                                            )
+                                                          ))),
+                                               tabPanel(title = "Diagrama de barras", icon  = icon("bar-chart"),
+                                                        wellPanel(
+                                                          fluidRow(
+                                                            plotOutput(outputId = "barPlotPolarity")
+                                                          )
+                                                        )
+                                                        
+                                               ), 
+                                               tabPanel(title = "Matriz de término de documentos", icon = icon("table"),
+                                                        wellPanel(
+                                                          fluidRow(
+                                                            plotOutput(outputId = "barPlotTDM")
+                                                          ))
+                                                        
+                                               ), 
+                                               tabPanel(title = "Nube de palabras", icon  = icon("cloud"),
+                                                        wellPanel(
+                                                          fluidRow(
+                                                            plotOutput(outputId = "wordCloudPlot")
+                                                          ))
+                                                        
+                                               ),
+                                               # tabPanel(title = "Geolocalización",  icon  = icon("globe-americas"),
+                                               #          wellPanel(
+                                               #            fluidRow(
+                                               #              leafletOutput(outputId = "geoMapLocal")
+                                               #            ))
+                                               #          
+                                               # ),
+                                               tabPanel(title = "Polaridad por ciudad", icon = icon("fire"),
+                                                        wellPanel(
+                                                          fluidRow(
+                                                            plotOutput(outputId = "heatMapLocalData")
+                                                          ))
+                                                        
+                                               ),
+                                               # tabPanel(title = "Grafico Lollipop", icon = icon("project-diagram"),
+                                               #          wellPanel(
+                                               #            fluidRow(
+                                               #              plotOutput(outputId = "lollipopPlot")
+                                               #            ))
+                                               #          
+                                               # ),
+                                               tabPanel(title = "Conteo palabras por sentimiento", icon = icon("font"),
+                                                        wellPanel(
+                                                          fluidRow(
+                                                            plotOutput(outputId = "sentimenWordCountsPlot")
+                                                          )),
+                                                        wellPanel(
+                                                          fluidRow(
+                                                            plotOutput(outputId = "sentimenWordPercentPlot")
+                                                          ))
+                                                        
+                                               )
+                                   )   
+                                   
+                                   
                                  )
                                                
                             ),
                            # conditionalPanel( condition="input.showData == 1",
                             #                 wellPanel(
-                           tabPanel( title="Datos locales", value = 2,
+                           tabPanel( title="Resultados de polaridad", value = 2,
                                      br(),
                                   
                                      h5(textOutput("descriptionTable")),
@@ -155,7 +228,7 @@ body <- dashboardBody(
             )
     ),
     tabItem(tabName = "geolocalizacion",
-            titlePanel("Geolocalización Twitter", windowTitle = "Análisis sentimiento Twitter por Geolocalización"),
+            titlePanel("Búsqueda de tweets", windowTitle = "Análisis sentimiento Twitter por Geolocalización"),
             tabsetPanel(type = "tabs", id= "tabsetPanel",
                         tabPanel(title ="Geolocalización", 
                                  
@@ -169,18 +242,17 @@ body <- dashboardBody(
                                                   
                                                   dateRangeInput("geoFromToDate", language = 'es', label = "Rango fecha", separator = "hasta", weekstart = 1),
                                                   numericInput("geoRatio", "Cobertura(km)", min = 0, max = 500,value = 10, width = 200),
-                                                  
-                                                  actionButton("calcGeoSentiment", label = "Análisis"),
                                                   p(),
                                                   leafletOutput("EcuadorMap")
-                                                  
+ 
                                              )
-                                     )
-                                     
+                                     ),
+                                     p(),
+                                     actionButton("calcGeoSentiment", label = "Análisis")
                                    )
                                    
                                  ),
-                                
+                                wellPanel(
                                  titlePanel("Resultados", windowTitle = "Resultado análisis sentimiento"),
                                  tabsetPanel(type = "tabs", id= "tabsetResult", 
                                              tabPanel(title = "General", 
@@ -202,12 +274,10 @@ body <- dashboardBody(
                                              )
                                              
                                  )
-                                 
-                                
-                                 
+                                )
                         ),
                         
-                        tabPanel( title="Datos",
+                        tabPanel( title="Resultados de polaridad",
                                   br(),
                                   DT::dataTableOutput(outputId = "twitterData")
                                   
@@ -219,88 +289,18 @@ body <- dashboardBody(
             
             
     ),
-    
-    tabItem(tabName = "Results",
-            #titlePanel("Resultados"),
-            tabsetPanel(type = "tabs", id= "tabsetLocalResult", 
-                        tabPanel(title = "Nivel de polaridad por tweets", icon = icon("chart-line"), 
-                                 wellPanel(
-                                   fluidRow(
-                                     
-                                     tableOutput(outputId = "dataTweets"),
-                                     #plotOutput(outputId = "scatterplot")
-                                     box(
-                                       title = "Tendencia", status = "primary", solidHeader = TRUE,
-                                       collapsible = T,
-                                       plotOutput(outputId = "scatterplot", height = 250)
-                                     )
-                                   ))),
-                        tabPanel(title = "Diagrama de barras", icon  = icon("bar-chart"),
-                                 wellPanel(
-                                   fluidRow(
-                                     plotOutput(outputId = "barPlotPolarity")
-                                   )
-                                 )
-                                 
-                        ), 
-                        tabPanel(title = "Matriz de término de documentos", icon = icon("table"),
-                                 wellPanel(
-                                   fluidRow(
-                                     plotOutput(outputId = "barPlotTDM")
-                                   ))
-                                 
-                        ), 
-                        tabPanel(title = "Nube de palabras", icon  = icon("cloud"),
-                                 wellPanel(
-                                   fluidRow(
-                                     plotOutput(outputId = "wordCloudPlot")
-                                   ))
-                                 
-                        ),
-                        # tabPanel(title = "Geolocalización",  icon  = icon("globe-americas"),
-                        #          wellPanel(
-                        #            fluidRow(
-                        #              leafletOutput(outputId = "geoMapLocal")
-                        #            ))
-                        #          
-                        # ),
-                        tabPanel(title = "Polaridad por ciudad", icon = icon("fire"),
-                                 wellPanel(
-                                   fluidRow(
-                                     plotOutput(outputId = "heatMapLocalData")
-                                   ))
-                                 
-                        ),
-                        # tabPanel(title = "Grafico Lollipop", icon = icon("project-diagram"),
-                        #          wellPanel(
-                        #            fluidRow(
-                        #              plotOutput(outputId = "lollipopPlot")
-                        #            ))
-                        #          
-                        # ),
-                        tabPanel(title = "Conteo palabras por sentimiento", icon = icon("font"),
-                                 wellPanel(
-                                   fluidRow(
-                                     plotOutput(outputId = "sentimenWordCountsPlot")
-                                   )),
-                                 wellPanel(
-                                   fluidRow(
-                                     plotOutput(outputId = "sentimenWordPercentPlot")
-                                   ))
-                                 
-                        )
-            )   
-    ),
-    
+
     tabItem(tabName = "configuration",
-      titlePanel("Configuración de diccionario", windowTitle = "Configuración de diccionarios"),
+      titlePanel("Configuración de diccionarios", windowTitle = "Configuración de diccionarios"),
         tabsetPanel(type = "tabs", id= "tabsetPanel",
           tabPanel(title ="Diccionario de sentimientos",
                    br(),
                    checkboxInput("showData", "Mostrar datos", value = FALSE),
-                   actionButton("add_btn", "Agregar"),
+                   #actionButton("add_btn", "Agregar"),
+                   actionButton("newWord", "Agregar"),
                    actionButton("delete_btn", "Eliminar"),
-                   actionButton("save_btn", "Guardar"),
+                   #actionButton("save_btn", "Guardar"),
+                   span(textOutput("newMappedWord"), style="color:red"),
                    br(),
                    br(),
                    DT::dataTableOutput(output = "dictionary_ec")
@@ -311,28 +311,29 @@ body <- dashboardBody(
                    checkboxInput("showDataShifValence", "Mostrar datos", value = FALSE),
                    actionButton("add_btnShiftValence", "Agregar"),
                    actionButton("delete_btnShiftValence", "Eliminar"),
-                   actionButton("save_btnShiftValence", "Guardar"),
+                   span(textOutput("newMappedWordShif"), style="color:red"),
+                  # actionButton("save_btnShiftValence", "Guardar"),
                    br(),
                    br(),
                    DT::dataTableOutput(output = "dictionary_ec_ShiftValence")
                    
-                   ),
-          tabPanel(title = "Cargar  nuevas palabras",
-                   br(),
-                   fileInput("fileLoadedNewWords", label = "Archivo",
-                             buttonLabel = "Cargar archivo",
-                             accept =c("csv",
-                                       "text/comma-separated-values",
-                                       ".csv")),
-                   checkboxInput("showDataNewDictionary", "Mostrar datos", value = FALSE),
-                   actionButton("add_btnNewWord", "Agregar"),
-                   actionButton("delete_btnNewWord", "Eliminar"),
-                   actionButton("save_btnNewWord", "Guardar"),
-                   br(),
-                   br(),
-                   DT::dataTableOutput(output = "dictionary_ec_NewWords")
-                   
-          )
+                   )
+          # tabPanel(title = "Cargar  nuevas palabras",
+          #          br(),
+          #          fileInput("fileLoadedNewWords", label = "Archivo",
+          #                    buttonLabel = "Cargar archivo",
+          #                    accept =c("csv",
+          #                              "text/comma-separated-values",
+          #                              ".csv")),
+          #          checkboxInput("showDataNewDictionary", "Mostrar datos", value = FALSE),
+          #          actionButton("add_btnNewWord", "Agregar"),
+          #          actionButton("delete_btnNewWord", "Eliminar"),
+          #          actionButton("save_btnNewWord", "Guardar"),
+          #          br(),
+          #          br(),
+          #          DT::dataTableOutput(output = "dictionary_ec_NewWords")
+          #          
+          # )
         )
       ),
     

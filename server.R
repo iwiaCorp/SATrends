@@ -726,9 +726,30 @@ shinyServer(function(input, output, session) {
     t = lexico_ec_table()
     
     if (!is.null(input$dictionary_ec_rows_selected)) {
+     
       t <- t[-as.numeric(input$dictionary_ec_rows_selected),]
+      
+      lexico_ec_table(t)
+      
+      output$newMappedWord <- renderText({
+        ""
+      })
+      #asignacion a variable global con <<
+      lexico_ec <<- lexico_ec_table() %>% select(word, value)  
+      
+      lexico_ec %>%
+        write.csv(file="lexico_ec_custom.csv", row.names = FALSE )
     }
-    lexico_ec_table(t)
+    else
+    {
+      output$newMappedWord <- renderText({
+        "No se ha seleccionado un registro para eliminar."
+      })
+  
+    }
+  
+    
+   
   })
   
   #configuracion del diccionario
@@ -742,7 +763,7 @@ shinyServer(function(input, output, session) {
                                                                        info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
                                                                        paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
                        rownames = FALSE,
-                       editable = TRUE,
+                       editable = FALSE,
                        colnames = c("Palabra" = "word", "Valor" = "value"),
                        filter = "top"
                        )
@@ -790,7 +811,7 @@ shinyServer(function(input, output, session) {
                                                       info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
                                                       paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
                        rownames = FALSE,
-                       editable = TRUE,
+                       editable = FALSE,
                        colnames = c("Palabra" = "x", "Valor" = "y"),
                        filter = "top"
         )
@@ -799,39 +820,39 @@ shinyServer(function(input, output, session) {
   
   ####logica cargar nuevas palabras####
   #carga datos de archivo
-  dataNewWordsFileLoaded <- eventReactive(input$fileLoadedNewWords,{
-    req(input$fileLoadedNewWords)
-    inFile <- read.csv(input$fileLoadedNewWords$datapath )
-    
-    if(nrow(inFile) == 0)
-      return(NULL)
-    
-    #crea dato local
-    newWordsLocal$data <- inFile %>%
-      createNewWords()
-    
-    return(newWordsLocal$data)
-  })
+  # dataNewWordsFileLoaded <- eventReactive(input$fileLoadedNewWords,{
+  #   req(input$fileLoadedNewWords)
+  #   inFile <- read.csv(input$fileLoadedNewWords$datapath )
+  #   
+  #   if(nrow(inFile) == 0)
+  #     return(NULL)
+  #   
+  #   #crea dato local
+  #   newWordsLocal$data <- inFile %>%
+  #     createNewWords()
+  #   
+  #   return(newWordsLocal$data)
+  # })
   
-  #valor reactivo para palabras locales cargados
-  newWordsLocal <- reactiveValues(
-    data = NULL
-  )
+  # #valor reactivo para palabras locales cargados
+  # newWordsLocal <- reactiveValues(
+  #   data = NULL
+  # )
   
-  output$dictionary_ec_NewWords <- DT::renderDataTable(
-    
-    if(nrow(dataNewWordsFileLoaded()) != 0 & input$showDataNewDictionary)
-    {
-     
-      newWordsLocal$data %>%
-        DT::datatable(  options = list(pageLength = 10, language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
-                                                                       info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-                                                                       paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
-                       rownames = FALSE,
-                       editable = TRUE,
-                       colnames = c("Palabra" = "Palabra", "Contador palabra" = "w", "Polaridad (-1 hasta 1)" = "polarity" ))
-    }
-  )
+  # output$dictionary_ec_NewWords <- DT::renderDataTable(
+  #   
+  #   if(nrow(dataNewWordsFileLoaded()) != 0 & input$showDataNewDictionary)
+  #   {
+  #    
+  #     newWordsLocal$data %>%
+  #       DT::datatable(  options = list(pageLength = 10, language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
+  #                                                                      info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+  #                                                                      paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
+  #                      rownames = FALSE,
+  #                      editable = TRUE,
+  #                      colnames = c("Palabra" = "Palabra", "Contador palabra" = "w", "Polaridad (-1 hasta 1)" = "polarity" ))
+  #   }
+  # )
   
   # download plate summary
   output$saveMetaBtn <- downloadHandler(
@@ -841,6 +862,116 @@ shinyServer(function(input, output, session) {
       write.csv(datosLocalesTweets$data , file, row.names = FALSE)
     }
   )
+  
+  # reactiveValues object for storing current data set.
+  vals <- reactiveValues(data = NULL)
+  
+  dataModal <- function(failed = FALSE) {
+    modalDialog(
+      textInput("word", "Ingrese una nueva palabra al diccionario",
+                placeholder = 'nueva palabra o expresión'
+      ),
+      numericInput("valorPol", label = "Valor polaridad", min = -1, max = 1, step = 0.5, value = 0),
+    if (failed)
+        div(tags$b("No es una palabra válida", style = "color: red;")),
+      
+      footer = tagList(
+        modalButton("Cancelar"),
+        actionButton("ok", "OK")
+      )
+    )
+  }
+  
+  # Show modal when button is clicked.
+  observeEvent(input$newWord, {
+    showModal(dataModal())
+  })
+  
+  observeEvent(input$ok, {
+    # Check that data object exists and is data frame.
+    if (!is.null(input$word) && nzchar(input$word)) {
+      
+      vals$data <- paste0( input$word, input$valorPol)
+      new_row <- c(input$word, input$valorPol)
+      print(new_row)
+      
+      t = rbind(data.frame(word = as.character(input$word),
+                           value = as.numeric(input$valorPol)), lexico_ec_table(), stringsAsFactors = FALSE )
+      
+    
+      
+      DT::replaceData(proxy, lexico_ec_table(t), resetPaging = FALSE)  # important
+      
+      #lexico_ec_table <- rbind(lexico_ec_table, new_row)
+      # 
+     lexico_ec <<- lexico_ec_table() %>% select(word, value)  
+      # 
+     lexico_ec %>%
+       write.csv(file="lexico_ec_custom.csv", row.names = FALSE )
+      removeModal()
+    } else {
+      showModal(dataModal(failed = TRUE))
+    }
+  })
+  
+  # # Display information about selected data
+  # output$newMappedWord <- renderPrint({
+  #   if (is.null(vals$data))
+  #     "No se ha agregado palabra."
+  #   else
+  #     vals$data
+  # })
+  
+  # Cuadro dialogo para cambios de sentimientos
+  observeEvent(input$add_btnShiftValence, {
+    showModal(dataModalShift())
+  })
+  
+  dataModalShift <- function(failed = FALSE) {
+    modalDialog(
+      textInput("wordShif", "Ingrese una nueva palabra al diccionario",
+                placeholder = 'Nueva palabra'
+      ),
+    #  numericInput("ValueShif", label = "Valor polaridad", min = -1, max = 1, step = 0.5, value = 0),
+      selectInput("Category", "Categoría", choices = c("Negador" = 1, "Amplificador" = 2, "Deamplificador"=3, 
+                                                       "Conjunciones adversativas"=4)),
+      if (failed)
+        div(tags$b("No es una palabra válida", style = "color: red;")),
+      
+      footer = tagList(
+        modalButton("Cancelar"),
+        actionButton("okShif", "OK")
+      )
+    )
+  }
+  
+  observeEvent(input$okShif, {
+    # Check that data object exists and is data frame.
+    if (!is.null(input$wordShif) && nzchar(input$wordShif)) {
+      
+      #vals$data <- paste0( input$wordShif, input$ValueShif)
+      new_row <- c(input$wordShif, input$Category)
+      print(new_row)
+      # 
+      # t = rbind(data.frame(word = as.character(input$word),
+      #                      value = as.numeric(input$valorPol)), lexico_ec_table(), stringsAsFactors = FALSE )
+      # 
+      
+      # 
+      # DT::replaceData(proxy, lexico_ec_table(t), resetPaging = FALSE)  # important
+      # 
+      # 
+      # lexico_ec <<- lexico_ec_table() %>% select(word, value)  
+      # 
+      # lexico_ec %>%
+      #   write.csv(file="lexico_ec_custom.csv", row.names = FALSE )
+      removeModal()
+    } else {
+      showModal(dataModalShift(failed = TRUE))
+    }
+  })
+  
+  
   
   
 })
