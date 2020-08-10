@@ -25,35 +25,25 @@ localData <- base64enc::dataURI(file="localData.png", mime="image/png")
 analisysScreen <- base64enc::dataURI(file="analisysScreen.png", mime="image/png")
 
 
-helpPopup <- function(content, title = NULL) {
-  a(href = "#",
-    class = "popover-link",
-    `data-toggle` = "popover",
-    `data-title` = title,
-    `data-content` = content,
-    `data-html` = "true",
-    `data-trigger` = "hover",
-    icon("question-circle")
-  )
-}
+source(file.path("ui", "helpers.R"))
 
 # Set up a button to have an animated loading indicator and a checkmark
 # for better user experience
 # Need to use with the corresponding `withBusyIndicator` server function
-withBusyIndicator <- function(button) {
-  id <- button[['attribs']][['id']]
-  tagList(
-    button,
-    span(
-      class = "btn-loading-container",
-      `data-for-btn` = id,
-      hidden(
-        img(src = "ajax-loader-bar.gif", class = "btn-loading-indicator"),
-        icon("check", class = "btn-done-indicator")
-      )
-    )
-  )
-}
+# withBusyIndicator <- function(button) {
+#   id <- button[['attribs']][['id']]
+#   tagList(
+#     button,
+#     span(
+#       class = "btn-loading-container",
+#       `data-for-btn` = id,
+#       hidden(
+#         img(src = "ajax-loader-bar.gif", class = "btn-loading-indicator"),
+#         icon("check", class = "btn-done-indicator")
+#       )
+#     )
+#   )
+# }
 
 header <- dashboardHeader(dropdownMenuOutput("task_menu" ), title = "Products & Services Trends", titleWidth =  280) 
                           
@@ -69,7 +59,7 @@ sideBar <- dashboardSidebar( width = 280,
   )
 )
 
-body <- dashboardBody( 
+body <- dashboardBody(
   
   tabItems( 
     tabItem(tabName = "analisys",
@@ -77,20 +67,35 @@ body <- dashboardBody(
         
             tabsetPanel(type = "tabs", id= "tabsetPanelLocalData",
                         tabPanel(title ="Cargar datos", value = 1, class = "fade in", 
+                                
                                  wellPanel(
-                                   fluidRow( useShinyjs(),
+                                   fluidRow( 
                                      column( width = 12,
-                                             box( width = NULL,collapsible = TRUE,
+                                             box( width = NULL,collapsible = FALSE,
                                                   
-                                                  fileInput("fileLoaded", label = "Archivo",
+                                                  fileInput("fileLoaded", 
+                                                            div("Archivo",
+                                                                helpPopup("Debe ser un archivo <i>.csv</i>  con  información descargada de comentarios.")
+                                                            ),
                                                             buttonLabel = "Buscar archivo",
-                                                           # div(
-                                                          #    helpPopup('Este es un archivo csv con la información descargada de comentarios.')
-                                                          #  ),
                                                             
+                                                            multiple = FALSE, 
                                                             accept =c("csv",
                                                                       "text/comma-separated-values",
                                                                       ".csv"))
+                                                  # fileInput(
+                                                  #   "uploadDataFiles",
+                                                  #   div("Data files",
+                                                  #       helpPopup('These are all the files exported by QuantaSoft with names ending in "_Amplitude"'),
+                                                  #       br(), downloadLink("sampleDataFile", "Example data file")
+                                                  #   ),
+                                                  #   multiple = TRUE,
+                                                  #   accept = c(
+                                                  #     'text/csv',
+                                                  #     'text/comma-separated-values',
+                                                  #     '.csv'
+                                                  #   )
+                                                  # )
                                                   # withBusyIndicator(
                                                   #   actionButton(
                                                   #     "uploadFilesBtn",
@@ -99,129 +104,164 @@ body <- dashboardBody(
                                                   #   )
                                                   # )
                                                   #radioButtons("showData", "Mostrar datos", choices = c("Si"=1, "No"=2), selected = 2)
-                                             )#,
-                                             # actionButton(
-                                             #   "uploadFilesButton",
-                                             #   "Cargar datos",
-                                             #   class = "btn-primary"
-                                             # )
-                                             
-                                             
-                                     )
-                                     )
-                                   
-                                   
-                                 ),
-                                 wellPanel(
-                                   fluidRow(
-                                     column( width = 12,
-                                             box( width = NULL,collapsible = TRUE, 
-                                                  
-                                                  #textInput("geoLocalSearch", label = "Texto de búsqueda", placeholder = "Ingrese producto o servicio"),
-                                                  
-                                                  #selectInput("citySelected", "Ciudades Test", choices = c("quito", "Guayaquil", "Cuenca")),
-                                                  htmlOutput("CitiesLoaded"),
-                                                  #radioButtons("genero", "Genero", choices = c("Femenino", "Masculino")), 
-                                                  dateRangeInput("fromToDate", language = 'es', label = "Rango fecha", separator = "hasta", weekstart = 1),
-                                                  p(),
-                                                  actionButton("calcSentiment", label = "Análisis")
-                                                  
-                                             )
-                                     ))
-                                   
-                                   
-                                 ),
-                                 wellPanel(
-                                 
-                                   tabsetPanel(type = "tabs", id= "tabsetLocalResult", 
-                                               tabPanel(title = "Nivel de polaridad por tweets", icon = icon("chart-line"), 
-                                                        wellPanel(
-                                                          fluidRow(
-                                                            
-                                                            tableOutput(outputId = "dataTweets"),
-                                                            #plotOutput(outputId = "scatterplot")
-                                                            box(
-                                                              title = "Tendencia", status = "primary", solidHeader = TRUE,
-                                                              collapsible = T,
-                                                              plotOutput(outputId = "scatterplot", height = 250)
-                                                            )
-                                                          ))),
-                                               tabPanel(title = "Diagrama de barras", icon  = icon("bar-chart"),
-                                                        wellPanel(
-                                                          fluidRow(
-                                                            plotOutput(outputId = "barPlotPolarity")
-                                                          )
-                                                        )
-                                                        
-                                               ), 
-                                               tabPanel(title = "Matriz de término de documentos", icon = icon("table"),
-                                                        wellPanel(
-                                                          fluidRow(
-                                                            plotOutput(outputId = "barPlotTDM")
-                                                          ))
-                                                        
-                                               ), 
-                                               tabPanel(title = "Nube de palabras", icon  = icon("cloud"),
-                                                        wellPanel(
-                                                          fluidRow(
-                                                            plotOutput(outputId = "wordCloudPlot")
-                                                          ))
-                                                        
-                                               ),
-                                               # tabPanel(title = "Geolocalización",  icon  = icon("globe-americas"),
-                                               #          wellPanel(
-                                               #            fluidRow(
-                                               #              leafletOutput(outputId = "geoMapLocal")
-                                               #            ))
-                                               #          
-                                               # ),
-                                               tabPanel(title = "Polaridad por ciudad", icon = icon("fire"),
-                                                        wellPanel(
-                                                          fluidRow(
-                                                            plotOutput(outputId = "heatMapLocalData")
-                                                          ))
-                                                        
-                                               ),
-                                               # tabPanel(title = "Grafico Lollipop", icon = icon("project-diagram"),
-                                               #          wellPanel(
-                                               #            fluidRow(
-                                               #              plotOutput(outputId = "lollipopPlot")
-                                               #            ))
-                                               #          
-                                               # ),
-                                               tabPanel(title = "Conteo palabras por sentimiento", icon = icon("font"),
-                                                        wellPanel(
-                                                          fluidRow(
-                                                            plotOutput(outputId = "sentimenWordCountsPlot")
-                                                          )),
-                                                        wellPanel(
-                                                          fluidRow(
-                                                            plotOutput(outputId = "sentimenWordPercentPlot")
-                                                          ))
-                                                        
+                                             ),
+                                             withBusyIndicator(
+                                               actionButton(
+                                                 "uploadFilesButton",
+                                                 "Cargar datos",
+                                                 class = "btn-primary"
                                                )
-                                   )   
+                                             )
+                                             
+                                             
+                                     )
+                                     )
                                    
                                    
+                                 ),
+                                 # wellPanel(
+                                 #   fluidRow(
+                                 #     column( width = 12,
+                                 #             box( width = NULL,collapsible = TRUE,
+                                 # 
+                                 #                  #textInput("geoLocalSearch", label = "Texto de búsqueda", placeholder = "Ingrese producto o servicio"),
+                                 # 
+                                 #                  #selectInput("citySelected", "Ciudades Test", choices = c("quito", "Guayaquil", "Cuenca")),
+                                 #                  # htmlOutput("CitiesLoaded"),
+                                 #                  # #radioButtons("genero", "Genero", choices = c("Femenino", "Masculino")),
+                                 #                  # dateRangeInput("fromToDate", language = 'es', label = "Rango fecha", separator = "hasta", weekstart = 1),
+                                 #                  p(),
+                                 #                 # actionButton("calcSentiment", label = "Análisis")
+                                 #                  withBusyIndicator(
+                                 #                    actionButton(
+                                 #                      "calcSentiment",
+                                 #                      "Análisis",
+                                 #                      class = "btn-primary"
+                                 #                    )
+                                 #                  )
+                                 #             )
+                                 #     ))
+                                 # 
+                                 # 
+                                 # ),
+                                 wellPanel(
+                                   
+                                 fluidRow(
+                                  
+                                   column( width = 12,
+                                           div(id = "datasetDescSelect",
+                                               "Resultados"),
+                                           box( width = NULL,collapsible = FALSE,
+   
+                                     
+                                     withBusyIndicator(
+                                       actionButton(
+                                         "calcSentiment",
+                                         "Análisis",
+                                         class = "btn-primary"
+                                       )
+                                     ),
+                                    p(),
+                                    
+                                  
+                                       tabsetPanel(type = "tabs", id= "tabsetLocalResult", 
+                                                                     
+                                                     tabPanel(title = "Nivel de polaridad por tweets", icon = icon("chart-line"), id = "levelTweetsGraph" , 
+                                                              wellPanel(
+                                                                fluidRow(
+                                                                  
+                                                                  tableOutput(outputId = "dataTweets"),
+                                                                  #plotOutput(outputId = "scatterplot")
+                                                                  box(
+                                                                    title = "Tendencia", status = "primary", solidHeader = TRUE, width = 600,
+                                                                    collapsible = F,
+                                                                    plotOutput(outputId = "scatterplot", height = 350, width = 800)
+                                                                  )
+                                                                ))),
+                                                     tabPanel(title = "Diagrama de barras", icon  = icon("bar-chart"),
+                                                              wellPanel(
+                                                                fluidRow(
+                                                                  plotOutput(outputId = "barPlotPolarity")
+                                                                )
+                                                              )
+                                                              
+                                                     ), 
+                                                     tabPanel(title = "Matriz de término de documentos", icon = icon("table"),
+                                                              wellPanel(
+                                                                fluidRow(
+                                                                  plotOutput(outputId = "barPlotTDM")
+                                                                ))
+                                                              
+                                                     ), 
+                                                     tabPanel(title = "Nube de palabras", icon  = icon("cloud"),
+                                                              wellPanel(
+                                                                fluidRow(
+                                                                  plotOutput(outputId = "wordCloudPlot")
+                                                                ))
+                                                              
+                                                     ),
+                                                     # tabPanel(title = "Geolocalización",  icon  = icon("globe-americas"),
+                                                     #          wellPanel(
+                                                     #            fluidRow(
+                                                     #              leafletOutput(outputId = "geoMapLocal")
+                                                     #            ))
+                                                     #          
+                                                     # ),
+                                                     tabPanel(title = "Polaridad por ciudad", icon = icon("fire"),
+                                                              wellPanel(
+                                                                fluidRow(
+                                                                  plotOutput(outputId = "heatMapLocalData")
+                                                                ))
+                                                              
+                                                     ),
+                                                     # tabPanel(title = "Grafico Lollipop", icon = icon("project-diagram"),
+                                                     #          wellPanel(
+                                                     #            fluidRow(
+                                                     #              plotOutput(outputId = "lollipopPlot")
+                                                     #            ))
+                                                     #          
+                                                     # ),
+                                                     tabPanel(title = "Conteo palabras por sentimiento", icon = icon("font"),
+                                                              wellPanel(
+                                                                fluidRow(
+                                                                  plotOutput(outputId = "sentimenWordCountsPlot")
+                                                                )),
+                                                              wellPanel(
+                                                                fluidRow(
+                                                                  plotOutput(outputId = "sentimenWordPercentPlot")
+                                                                ))
+                                                              
+                                                     )
+                                         ) 
+                                      
+                                    )
+                                   )
+                                     
+                                   )
                                  )
                                                
                             ),
-                           # conditionalPanel( condition="input.showData == 1",
-                            #                 wellPanel(
-                           tabPanel( title="Resultados de polaridad", value = 2,
+                                        
+                           tabPanel( title="Resultados de polaridad", value = 2, id = "resultLocalTab",
                                      br(),
-                                  
-                                     h5(textOutput("descriptionTable")),
-                                     br(),
-                                     downloadButton("saveMetaBtn", "Descargar detalle de archivo."),
-                                     br(), br(),
-                                     fluidRow(
-                                        DT::dataTableOutput(outputId = "twetterDataLocal")
-                                       )
-                                             
+                                     conditionalPanel( condition="output.datasetChosen",
+                                                       
+                                                       h5(textOutput("descriptionTable")),
+                                                       br(),
+                                                       downloadButton("saveMetaBtn", "Descargar detalle de archivo."),
+                                                       br(), br(),
+                                                       wellPanel(
+                                                         fluidRow(
+                                                           column( width = 12,
+                                                                   DT::dataTableOutput(outputId = "twetterDataLocal")
+                                                           )
+                                                         )
+                                                         
+                                                       )
                                      
+                                     )   
                            )
-                                             #)
+                          
                              
                             
             
@@ -236,7 +276,7 @@ body <- dashboardBody(
                                    
                                    fluidRow(
                                      column( width = 12,
-                                             box( width = NULL,collapsible = TRUE,
+                                             box( width = NULL,collapsible = FALSE,
                                                   
                                                   textInput("geoSearch", label = "Texto de búsqueda", placeholder = "Ingrese producto o servicio"),
                                                   
@@ -247,39 +287,129 @@ body <- dashboardBody(
  
                                              )
                                      ),
-                                     p(),
-                                     actionButton("calcGeoSentiment", label = "Análisis")
+                                     p()
+                                    # actionButton("calcGeoSentiment", label = "Análisis")
+                                    
                                    )
                                    
                                  ),
-                                wellPanel(
-                                 titlePanel("Resultados", windowTitle = "Resultado análisis sentimiento"),
-                                 tabsetPanel(type = "tabs", id= "tabsetResult", 
-                                             tabPanel(title = "General", 
-                                                      
-                                                      wellPanel(plotOutput(outputId = "barplot"))
-                                                      
-                                             ), 
-                                             tabPanel(title = "Día", 
-                                                      wellPanel(plotOutput(outputId = "dayPlot"))
-                                                      
-                                             ), 
-                                             tabPanel(title = "Género", 
-                                                      wellPanel(plotOutput(outputId = "genPolarityPlot"))
-                                                      
-                                             ), 
-                                             tabPanel(title = "Ciudad", 
-                                                      wellPanel(plotOutput(outputId = "cityPolarityPlot"))
-                                                      
+                                 
+                                 wellPanel(
+
+                                   fluidRow(
+
+                                     column( width = 12,
+                                             div(id = "onlineResult",
+                                                 "Resultados"),
+                                             box( width = NULL,collapsible = FALSE,
+                                                  
+                                              withBusyIndicator(
+                                                actionButton(
+                                                  "calcGeoSentiment",
+                                                  "Análisis",
+                                                  class = "btn-primary"
+                                                )
+                                              ),
+                                              p(),
+                                              
+                                              tabsetPanel(type = "tabs", id= "tabsetLocalResultOnline", 
+                                                          
+                                                          tabPanel(title = "Nivel de polaridad por tweets", icon = icon("chart-line"), id = "levelTweetsGraph" , 
+                                                                   wellPanel(
+                                                                     fluidRow(
+                                                                       box(
+                                                                         title = "Tendencia", status = "primary", solidHeader = TRUE, width = 600,
+                                                                         collapsible = F,
+                                                                         plotOutput(outputId = "scatterplotOnline", height = 350, width = 800)
+                                                                       )
+                                                                     ))),
+                                                          tabPanel(title = "Diagrama de barras", icon  = icon("bar-chart"),
+                                                                   wellPanel(
+                                                                     fluidRow(
+                                                                       plotOutput(outputId = "barPlotPolarityOnline")
+                                                                     )
+                                                                   )
+                                                                   
+                                                          ), 
+                                                          tabPanel(title = "Matriz de término de documentos", icon = icon("table"),
+                                                                   wellPanel(
+                                                                     fluidRow(
+                                                                       plotOutput(outputId = "barPlotTDMOnline")
+                                                                     ))
+                                                                   
+                                                          ), 
+                                                          tabPanel(title = "Nube de palabras", icon  = icon("cloud"),
+                                                                   wellPanel(
+                                                                     fluidRow(
+                                                                       plotOutput(outputId = "wordCloudPlotOnline")
+                                                                     ))
+                                                                   
+                                                          ),
+                                                         
+                                                          tabPanel(title = "Polaridad por ciudad", icon = icon("fire"),
+                                                                   wellPanel(
+                                                                     fluidRow(
+                                                                       plotOutput(outputId = "heatMapLocalDataOnline")
+                                                                     ))
+                                                                   
+                                                          ),
+                                                         
+                                                          tabPanel(title = "Conteo palabras por sentimiento", icon = icon("font"),
+                                                                   wellPanel(
+                                                                     fluidRow(
+                                                                       plotOutput(outputId = "sentimenWordCountsPlotOnline")
+                                                                     )),
+                                                                   wellPanel(
+                                                                     fluidRow(
+                                                                       plotOutput(outputId = "sentimenWordPercentPlotOnline")
+                                                                     ))
+                                                                   
+                                                          )
+                                              )        
+                                              
+                             
+                                 # tabsetPanel(type = "tabs", id= "tabsetResult", 
+                                 #             tabPanel(title = "General",  icon  = icon("bar-chart"),
+                                 #                      
+                                 #                      wellPanel(plotOutput(outputId = "barplot"))
+                                 #                      
+                                 #             ), 
+                                 #             tabPanel(title = "Día",  icon = icon("calendar-alt"),
+                                 #                      wellPanel(plotOutput(outputId = "dayPlot"))
+                                 #                      
+                                 #             ), 
+                                 #             tabPanel(title = "Género", icon = icon("venus-mars"),
+                                 #                      wellPanel(plotOutput(outputId = "genPolarityPlot"))
+                                 #                      
+                                 #             ), 
+                                 #             tabPanel(title = "Ciudad", icon = icon("city"),
+                                 #                      wellPanel(plotOutput(outputId = "cityPolarityPlot"))
+                                 #                      
+                                 #             )
+                                 #             
+                                 # )
+                             
                                              )
-                                             
+                                     )
+                                   )
                                  )
-                                )
+                               
                         ),
                         
                         tabPanel( title="Resultados de polaridad",
+                                  
+                                  h5(textOutput("descriptionTableOnline")),
                                   br(),
-                                  DT::dataTableOutput(outputId = "twitterData")
+                                  downloadButton("saveMetaBtnOnline", "Descargar detalle de archivo."),
+                                  br(), br(),
+                                  wellPanel(
+                                    fluidRow(
+                                      column( width = 12,
+                                              DT::dataTableOutput(outputId = "twitterData")
+                                      )
+                                    )
+                                    
+                                  )
                                   
                         )
                         
@@ -307,6 +437,8 @@ body <- dashboardBody(
                    
           ),
           tabPanel(title = "Diccionario cambio de sentimientos",
+                 
+                     
                    br(),
                    checkboxInput("showDataShifValence", "Mostrar datos", value = FALSE),
                    actionButton("add_btnShiftValence", "Agregar"),
@@ -380,7 +512,27 @@ body <- dashboardBody(
 # )
 
 #permite enviar las secciones al estilo dashboard
-ui <- dashboardPage(header, sideBar, body, skin = "purple")
+tagList(
+  shinydisconnect::disconnectMessage2(),
+  useShinyjs(),
+  tags$head(
+    tags$script(src = "saet.js"),
+   tags$link(href = "style.css", rel = "stylesheet")
+  ),
+  div(id = "loading-content", "Cargando...",
+      img(src = "ajax-loader-bar.gif")),
+  hidden(
+    div(id = "errorDiv",
+        div(icon("exclamation-circle"),
+            tags$b("Error: "),
+            span(id = "errorMsg")
+        )
+    )
+  ),
+ 
+  ui <- dashboardPage(header, sideBar, body, skin = "purple")
+)
+
                       
 
 

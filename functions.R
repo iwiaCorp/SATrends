@@ -279,6 +279,18 @@ sumWordFrecuency <- function(tdm){
   return (subSetWord)
 }
 
+sumWordFrecuencyOnline <- function(tdm){
+  w <- rowSums(tdm)
+  
+
+    subSetWord <- subset(w, w>=2)
+    
+  
+  
+  return (subSetWord)
+}
+
+
 #retorna tweets con el formato establecido y limpio
 dataTweetsFormat <- function(tweets){
   
@@ -495,7 +507,7 @@ palette_fn <- function(dataLocalTweets){
 headMapPlot <- function(df.tm){
   
   dataLocal <- data.frame(df.tm) %>% select(Ciudad, createdDate, 13)
-   
+  
   
   names(dataLocal) = c("Ciudad" , "createdDate",
                                      "Sentimiento")
@@ -512,6 +524,38 @@ headMapPlot <- function(df.tm){
           axis.ticks.x = element_line(colour="white"),
           axis.title.x = element_text(colour="white"),
          
+          plot.background=element_rect(fill="white"),
+          panel.background=element_rect(fill="white"),
+          panel.border=element_rect(fill=NA,colour="white"),
+          panel.grid.minor.x = element_line(colour="white"),
+          panel.grid.major.x = element_line(colour="white"),
+          panel.grid.minor.y = element_line(colour="white"),
+          panel.grid.major.y = element_line(colour="white"),
+          legend.background = element_rect(fill = "white"),
+          legend.text = element_text(colour="black"),
+          legend.title = element_text(colour="black"))
+}
+
+headMapPlotOnline <- function(df.tm){
+  
+  
+  dataLocal <- data.frame(df.tm) %>% select(Ciudad, createdDate, sentiment)
+  
+  names(dataLocal) = c("Ciudad" , "createdDate",
+                       "Sentimiento")
+  
+  ggplot(data = dataLocal, aes(x = createdDate, y = Ciudad)) +
+    geom_tile(aes(fill=Sentimiento),colour="grey5") +
+    scale_y_discrete(breaks = df.tm$Ciudad) +
+    
+    scale_fill_gradient2(low = "#FFDDDD", midpoint=0,space="Lab", mid="#FFE500", high = "#CCEEFF") +
+    ggtitle("Análisis de Sentimiento por ciudad") +
+    theme(axis.text.y = element_text(colour="grey5"),
+          axis.text.x = element_text(colour="grey5"),
+          axis.ticks.y = element_line(colour="white"),
+          axis.ticks.x = element_line(colour="white"),
+          axis.title.x = element_text(colour="white"),
+          
           plot.background=element_rect(fill="white"),
           panel.background=element_rect(fill="white"),
           panel.border=element_rect(fill=NA,colour="white"),
@@ -644,6 +688,42 @@ wordCountSentiment <- function(textData){
   #   
   # )
   
+}
+
+wordCountSentimentOnline <- function(textData){
+  
+  cleanText <- textData%>%
+    cleanDataTweets()
+  
+  df.tm2 <- data.frame(tweets = cleanText, stringsAsFactors = F )
+  df.tm2$tweets <- as.character(df.tm2$tweets) #importante el texto que no sea factor
+  
+  clean_dt <- df.tm2 %>%
+    unnest_tokens(word, tweets, 
+                  to_lower = F) %>%
+    filter(word %in% lexico_ec$word ) %>%
+    count(word, sort = T)
+  
+  clean_dt<- clean_dt %>%
+    inner_join(lexico_ec, by = c("word" = "word"))
+  
+  clean_dt$word <- factor(clean_dt$word,
+                          levels = rev(unique(clean_dt$word)))
+  clean_dt <- clean_dt %>%
+    mutate(Polaridad = ifelse(value > 0, "Positivo", "Negativo"))
+  
+
+  clean_dt %>%
+    filter(n>=2 ) %>%
+    arrange(Polaridad) %>%
+    ggplot( aes(x = reorder(word, n), y = factor(n), fill = Polaridad)) +
+    geom_col( position = "identity" , colour = "black", size = 0.25, width = 0.5) +
+    scale_fill_manual(values = c("#FFDDDD", "#CCEEFF"), guide = FALSE) +
+    # ylim(c(3,140)) +
+    facet_wrap(~Polaridad, scales = "free")+
+    coord_flip()+
+    labs(title = "Conteo palabras de sentimiento", x = "Palabras", y = "Número")
+
 }
 
 #grafico porcentaje de palabras de sentimiento
