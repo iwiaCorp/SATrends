@@ -170,8 +170,12 @@ body <- dashboardBody(
                                                               wellPanel(
                                                                 fluidRow(
                                                                   
-                                                                  tableOutput(outputId = "dataTweets"),
+                                                                  #tableOutput(outputId = "dataTweets"),
                                                                   #plotOutput(outputId = "scatterplot")
+                                                                  numericInput("minTweets", label = "Mínimo tweets:", min = 1, value = 1),
+                                                                  numericInput("maxTweets", label = "Máximo tweets:", min = 1, value = 700),
+                                                                  br(),
+                                                                  br(),
                                                                   box(
                                                                     title = "Tendencia", status = "primary", solidHeader = TRUE, width = 600,
                                                                     collapsible = F,
@@ -189,14 +193,25 @@ body <- dashboardBody(
                                                      tabPanel(title = "Matriz de término de documentos", icon = icon("table"),
                                                               wellPanel(
                                                                 fluidRow(
+                                                               #   sliderInput("frecuencyWord", label = "Número de palabras", min = 2, max = 30,value = 2),
+                                                                  numericInput("frecuencyWord", label = "Frecuencia de palabras", min = 2, value = 2),
+                                                                  br(),
+                                                                  br(),
                                                                   plotOutput(outputId = "barPlotTDM")
+                                                                 
                                                                 ))
                                                               
                                                      ), 
                                                      tabPanel(title = "Nube de palabras", icon  = icon("cloud"),
                                                               wellPanel(
                                                                 fluidRow(
-                                                                  plotOutput(outputId = "wordCloudPlot")
+                                                                  sliderInput("freqMin",
+                                                                              "Frecuencia mínima:",
+                                                                              min = 1,  max = 50, value = 5),
+                                                                  sliderInput("maxWord", label = "Máximo número de palabras", min = 5, max = 200,value = 50),
+                                                                  br(),
+                                                                  br(),
+                                                                  plotOutput(outputId = "wordCloudPlot", height = "400px")
                                                                 ))
                                                               
                                                      ),
@@ -279,9 +294,15 @@ body <- dashboardBody(
                                              box( width = NULL,collapsible = FALSE,
                                                   
                                                   textInput("geoSearch", label = "Texto de búsqueda", placeholder = "Ingrese producto o servicio"),
-                                                  
-                                                  dateRangeInput("geoFromToDate", language = 'es', label = "Rango fecha", separator = "hasta", weekstart = 1),
-                                                  numericInput("geoRatio", "Cobertura(km)", min = 0, max = 500,value = 10, width = 200),
+                                                  #div(style="display:inline-block;", 
+                                                    dateRangeInput("geoFromToDate", language = 'es', label = div("Rango fecha", helpPopup("Fecha permitida de 1 semana (7 días) antes de la fecha actual.")),
+                                                                       separator = "hasta", weekstart = 1,  start = Sys.Date()-7 ),
+                                                    #helpPopup("Fecha permitida de 1 semana (7 días) antes de la fecha actual.")
+                                                   # ),
+                                                  div(style="display:inline-block;",
+                                                    numericInput("geoRatio", "Cobertura(km)", min = 0, max = 500,value = 10, width = 200),
+                                                    actionButton("loadDataOnline", label = "Cargar datos", class = "btn-primary")
+                                                  ),
                                                   p(),
                                                   leafletOutput("EcuadorMap")
  
@@ -317,6 +338,10 @@ body <- dashboardBody(
                                                           tabPanel(title = "Nivel de polaridad por tweets", icon = icon("chart-line"), id = "levelTweetsGraph" , 
                                                                    wellPanel(
                                                                      fluidRow(
+                                                                       numericInput("minOnlineTweets", label = "Mínimo tweets:", min = 1, value = 1),
+                                                                       numericInput("maxOnlineTweets", label = "Máximo tweets:", min = 1, value = 20),
+                                                                       br(),
+                                                                       br(),
                                                                        box(
                                                                          title = "Tendencia", status = "primary", solidHeader = TRUE, width = 600,
                                                                          collapsible = F,
@@ -334,6 +359,9 @@ body <- dashboardBody(
                                                           tabPanel(title = "Matriz de término de documentos", icon = icon("table"),
                                                                    wellPanel(
                                                                      fluidRow(
+                                                                       numericInput("frecuencyOnlineWord", label = "Frecuencia de palabras", min = 2, value = 2),
+                                                                       br(),
+                                                                       br(),
                                                                        plotOutput(outputId = "barPlotTDMOnline")
                                                                      ))
                                                                    
@@ -341,6 +369,12 @@ body <- dashboardBody(
                                                           tabPanel(title = "Nube de palabras", icon  = icon("cloud"),
                                                                    wellPanel(
                                                                      fluidRow(
+                                                                       sliderInput("minOnlineFreq",
+                                                                                   "Frecuencia mínima:",
+                                                                                   min = 1,  max = 50, value = 5),
+                                                                       sliderInput("maxOnlineWord", label = "Máximo número de palabras", min = 5, max = 200,value = 30),
+                                                                       br(),
+                                                                       br(),
                                                                        plotOutput(outputId = "wordCloudPlotOnline")
                                                                      ))
                                                                    
@@ -396,24 +430,27 @@ body <- dashboardBody(
                                
                         ),
                         
-                        tabPanel( title="Resultados de polaridad",
-                                  
-                                  h5(textOutput("descriptionTableOnline")),
-                                  br(),
-                                  downloadButton("saveMetaBtnOnline", "Descargar detalle de archivo."),
-                                  br(), br(),
-                                  wellPanel(
-                                    fluidRow(
-                                      column( width = 12,
-                                              DT::dataTableOutput(outputId = "twitterData")
-                                      )
-                                    )
-                                    
+                        tabPanel( title="Resultados de polaridad", id = "resulOnlineTab",
+                                  conditionalPanel( condition="output.datasetOnlineChosen",
+                                                    
+                                                    h5(textOutput("descriptionTableOnline")),
+                                                    br(),
+                                                    downloadButton("saveMetaBtnOnline", "Descargar detalle de archivo."),
+                                                    br(), br(),
+                                                    wellPanel(
+                                                      fluidRow(
+                                                        column( width = 12,
+                                                                DT::dataTableOutput(outputId = "twitterData")
+                                                        )
+                                                      )
+                                                      
+                                                    )
                                   )
                                   
                         )
                         
             )
+            
             
             
             
@@ -425,12 +462,20 @@ body <- dashboardBody(
         tabsetPanel(type = "tabs", id= "tabsetPanel",
           tabPanel(title ="Diccionario de sentimientos",
                    br(),
-                   checkboxInput("showData", "Mostrar datos", value = FALSE),
+                   #checkboxInput("showData", "Mostrar datos", value = FALSE),
                    #actionButton("add_btn", "Agregar"),
                    actionButton("newWord", "Agregar"),
                    actionButton("delete_btn", "Eliminar"),
-                   #actionButton("save_btn", "Guardar"),
+                   div(style="display:inline-block;",
+                    actionButton("edit_btn", "Editar"), 
+                    helpPopup("Presione botón editar y realizar doble click sobre la linea que necesita modificar.")
+                   ),
+                   actionButton("save_btn", "Guardar"),
+                   
                    span(textOutput("newMappedWord"), style="color:red"),
+                   br(),
+                   br(),
+                   downloadButton("savePrimaryDictionaryBtn", "Descargar diccionario."),
                    br(),
                    br(),
                    DT::dataTableOutput(output = "dictionary_ec")
@@ -440,13 +485,26 @@ body <- dashboardBody(
                  
                      
                    br(),
-                   checkboxInput("showDataShifValence", "Mostrar datos", value = FALSE),
+                  # checkboxInput("showDataShifValence", "Mostrar datos", value = FALSE),
                    actionButton("add_btnShiftValence", "Agregar"),
                    actionButton("delete_btnShiftValence", "Eliminar"),
+                   div(style="display:inline-block;", actionButton("editShitfValence_btn", "Editar"),
+                       helpPopup("Presione botón editar y realizar doble click sobre la linea que necesita modificar.")
+                   ),
+                  
+                     actionButton(
+                       "saveShiftValence_btn",
+                       "Guardar"
+                     ),
+                  
+                  
                    span(textOutput("newMappedWordShif"), style="color:red"),
                   # actionButton("save_btnShiftValence", "Guardar"),
                    br(),
                    br(),
+                  downloadButton("saveValenceDictionaryBtn", "Descargar diccionario."),
+                  br(),
+                  br(),
                    DT::dataTableOutput(output = "dictionary_ec_ShiftValence")
                    
                    )

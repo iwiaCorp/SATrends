@@ -147,7 +147,7 @@ createData <- function(tweets){
   tweetsUnion<- tweetsUnion %>%
     mutate(element_id =  row_number())
   
-  return(tweetsUnion)
+  return(tweetsUnion[,-2])
   
 }
 
@@ -263,27 +263,27 @@ structureDataTweet <- function(cleanCorpus){
 
 #debido a que la grafica de barra puede volverse muy lento al tratar de graficar cada palabra, vamos a crear subconjuntos 
 #de palabras 
-sumWordFrecuency <- function(tdm){
+sumWordFrecuency <- function(tdm, numerFrecuencyWord){
   w <- rowSums(tdm)
   
   #w <- subset(w, w>=20)
   
-  subSetWord <- subset(w, w>=10)
-  
+  #subSetWord <- subset(w, w>=10)
+  subSetWord <- subset(w, w>=numerFrecuencyWord)
   
   if(length(subSetWord) == 0){
-    subSetWord <- subset(w, w>=2)
+    subSetWord <- subset(w, w>=numerFrecuencyWord)
     
   }
  
   return (subSetWord)
 }
 
-sumWordFrecuencyOnline <- function(tdm){
+sumWordFrecuencyOnline <- function(tdm, numFreqOnlineWord){
   w <- rowSums(tdm)
   
 
-    subSetWord <- subset(w, w>=2)
+    subSetWord <- subset(w, w>=numFreqOnlineWord)
     
   
   
@@ -302,18 +302,20 @@ dataTweetsFormat <- function(tweets){
 
 #nube de palabras
 
-calcWordcloud <- function(tdm){
+calcWordcloud <- function(tdm, maxNumWord, frecMin){
   library(wordcloud)
   freqWord <- sort(rowSums(tdm), decreasing = TRUE)
   set.seed(375)
   wordcloud(words = names(freqWord),
             freq = freqWord,
             random.order = FALSE,
-            max.words = 200,
-            min.freq = 5,
+            max.words = maxNumWord,
+            min.freq = frecMin,
             colors = brewer.pal(8, "Dark2"),
-            scale = c(5, 0.4),
-            rot.per = 0.5)
+            #scale = c(5, 0.4),
+            scale=c(4,0.5),
+            rot.per = 0.0,
+            fixed.asp = TRUE)
 }
 
 # cargar datos locales
@@ -447,11 +449,22 @@ searchTweets <- function(searchText, sinceDate, untilDate, geoCode, ratio){
   geoCodeValue <-paste(geoCode$lat[1],",",geoCode$lng[1], ",",ratio,"km",sep = '')
   
   #tweets <- searchTwitter(searchText, lang='es',since= sinceDate, until= untilDate,geocode = '-0.22985,-78.5249481,30km') #Quito, tiene datos OK
-  tweets <- searchTwitter(searchText, lang='es',since= sinceDate, until= untilDate,geocode = geoCodeValue) #Quito, tiene datos OK
-  
+  tweets <- tryCatch(
+    searchTwitter(searchText, lang='es',n = 1000, since= sinceDate, until= untilDate,geocode = geoCodeValue), #Quito, tiene datos OK
+    error = function(c)
+    {
+      warning("Error: No se pudo establecer autorización con API Twitter")
+      print(c)
+    }
+    )
   #Convirtiendo los tweets en un data frame
-  tweetsDF.df <- twListToDF(tweets)%>%
-    mutate(rowNumber = row_number())
+  tryCatch( 
+    tweetsDF.df <- twListToDF(tweets)%>%
+      mutate(rowNumber = row_number()),
+      error=function(e) 1
+      
+    )
+  
   
 }
 
@@ -516,7 +529,8 @@ headMapPlot <- function(df.tm){
     geom_tile(aes(fill=Sentimiento),colour="grey5") +
     scale_y_discrete(breaks = df.tm$Ciudad) +
     
-    scale_fill_gradient2(low = "#FFDDDD", midpoint=0,space="Lab", mid="#FFE500", high = "#CCEEFF") +
+   # scale_fill_gradient2(low = "#FFDDDD", midpoint=0,space="Lab", mid="#FFE500", high = "#CCEEFF") +
+    scale_fill_gradient2(low = "#FFDDDD", midpoint=0,space="Lab", mid="#CCEEFF", high = "#009aff") +
     ggtitle("Análisis de Sentimiento por ciudad") +
     theme(axis.text.y = element_text(colour="grey5"),
           axis.text.x = element_text(colour="grey5"),
@@ -539,16 +553,17 @@ headMapPlot <- function(df.tm){
 headMapPlotOnline <- function(df.tm){
   
   
-  dataLocal <- data.frame(df.tm) %>% select(Ciudad, createdDate, sentiment)
+  dataLocal <- data.frame(df.tm) %>% select(Ciudad, fechaTweet, sentiment)
   
-  names(dataLocal) = c("Ciudad" , "createdDate",
+  names(dataLocal) = c("Ciudad" , "fechaTweet",
                        "Sentimiento")
   
-  ggplot(data = dataLocal, aes(x = createdDate, y = Ciudad)) +
+  ggplot(data = dataLocal, aes(x = fechaTweet, y = Ciudad)) +
     geom_tile(aes(fill=Sentimiento),colour="grey5") +
     scale_y_discrete(breaks = df.tm$Ciudad) +
     
-    scale_fill_gradient2(low = "#FFDDDD", midpoint=0,space="Lab", mid="#FFE500", high = "#CCEEFF") +
+    #scale_fill_gradient2(low = "#FFDDDD", midpoint=0,space="Lab", mid="#FFE500", high = "#CCEEFF") +
+    scale_fill_gradient2(low = "#FFDDDD", midpoint=0,space="Lab", mid="#CCEEFF", high = "#009aff") +
     ggtitle("Análisis de Sentimiento por ciudad") +
     theme(axis.text.y = element_text(colour="grey5"),
           axis.text.x = element_text(colour="grey5"),

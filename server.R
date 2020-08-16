@@ -45,6 +45,9 @@ shinyServer(function(input, output, session) {
   output$datasetChosen <- reactive({ FALSE })
   outputOptions(output, 'datasetChosen', suspendWhenHidden = FALSE)
   
+  output$datasetOnlineChosen <- reactive({FALSE})
+  outputOptions(output, 'datasetOnlineChosen', suspendWhenHidden = FALSE)
+  
   output$exeCalcSentiment <- reactive({FALSE})
   outputOptions(output, 'exeCalcSentiment', suspendWhenHidden = FALSE)
   
@@ -55,7 +58,15 @@ shinyServer(function(input, output, session) {
   observeEvent(input$fileLoaded, ignoreNULL = FALSE, {
     toggleState("calcSentiment", !is.null(input$fileLoaded))
   })
-
+  
+  observeEvent(input$edit_btn, ignoreNULL = FALSE, {
+    toggleState("save_btn", !is.null(input$edit_btn))
+  })
+  
+  observeEvent(input$editShitfValence_btn, ignoreNULL = FALSE, {
+    toggleState("saveShiftValence_btn", !is.null(input$editShitfValence_btn))
+  })
+  
   #mapas datos locales (offline)
   # output$geoMapLocal <- renderLeaflet({
   #   req(nrow(datosLocalesTweets$data) != 0)
@@ -124,7 +135,7 @@ shinyServer(function(input, output, session) {
     return(datosLocalesTweets$data)
   })
   
-  # cuando el boton "Upload data" es clicleado
+  ####cargar datos local##### 
   observeEvent(input$uploadFilesButton, {
     withBusyIndicator("uploadFilesButton", {
       inFile <- read.csv(input$fileLoaded$datapath )
@@ -171,6 +182,8 @@ shinyServer(function(input, output, session) {
   #   }
   #   
   # )
+  
+####Tabla datos locales####
   output$twetterDataLocal <- DT::renderDataTable(
 
    # if(nrow(dataFileLoaded()) != 0 & !is.na(input$fromToDate[1])  & !is.na(input$fromToDate[2]))
@@ -178,7 +191,7 @@ shinyServer(function(input, output, session) {
     #{
       #language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json')
         datosLocalesTweets$data[,c(-9:-10)] %>%
-        DT::datatable( options = list(scrollX=TRUE, scrollCollapse=TRUE, scrollY = 500, pageLength = 10, language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
+        DT::datatable( options = list(scrollX=TRUE, scrollCollapse=TRUE, scrollY = 500, pageLength = 10, language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Buscar", 
                                                                        info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
                                                                        paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
                        rownames = FALSE,
@@ -360,18 +373,40 @@ shinyServer(function(input, output, session) {
   # })
   
   ####calculo TDM local####
-  wordFrecuencyTerm <- eventReactive(input$calcSentiment, {
+  # wordFrecuencyTerm <- eventReactive(input$calcSentiment, {
+  #   req(datosLocalesTweets$data)
+  #   {
+  #     #datos limpios
+  #     cleanDataText$data <- createCorpus(datosLocalesTweets$data$text) %>%
+  #           cleanDataTweetsV2("") #new
+  #          #cleanDataTweetsV2(input$geoLocalSearch)
+  #     
+  #     #crear corpus
+  #     word <- cleanDataText$data %>%
+  #             structureDataTweet() %>%
+  #             sumWordFrecuency(input$frecuencyWord)
+  #     
+  #     # word <- createCorpus(datosLocalesTweets$data$text) %>%
+  #     #   cleanDataTweetsV2(input$geoLocalSearch) %>%
+  #     #   structureDataTweet() %>%
+  #     #  sumWordFrecuency()
+  #     
+  #     return(word)
+  #   }
+  # })
+  
+  wordFrecuencyTerm <- eventReactive(input$frecuencyWord, {
     req(datosLocalesTweets$data)
     {
       #datos limpios
       cleanDataText$data <- createCorpus(datosLocalesTweets$data$text) %>%
-            cleanDataTweetsV2("") #new
-           #cleanDataTweetsV2(input$geoLocalSearch)
+        cleanDataTweetsV2("") #new
+      #cleanDataTweetsV2(input$geoLocalSearch)
       
       #crear corpus
       word <- cleanDataText$data %>%
-              structureDataTweet() %>%
-              sumWordFrecuency()
+        structureDataTweet() %>%
+        sumWordFrecuency(input$frecuencyWord)
       
       # word <- createCorpus(datosLocalesTweets$data$text) %>%
       #   cleanDataTweetsV2(input$geoLocalSearch) %>%
@@ -383,7 +418,7 @@ shinyServer(function(input, output, session) {
   })
   
   ####calculo TDM Online####
-  wordFrecuencyTermOnline <- eventReactive(input$calcGeoSentiment, {
+  wordFrecuencyTermOnline <- eventReactive(input$frecuencyOnlineWord, {
     req(datosOnlineTweets$data)
     {
       #datos limpios
@@ -394,14 +429,28 @@ shinyServer(function(input, output, session) {
       #crear corpus
       word <- cleanDataText$data %>%
         structureDataTweet() %>%
-        sumWordFrecuencyOnline()
+        sumWordFrecuencyOnline(input$frecuencyOnlineWord)
 
       return(word)
     }
   })
   
   ####nube de palabras local####
-  wordcloud <- eventReactive(input$calcSentiment, {
+  # wordcloud <- eventReactive(input$calcSentiment, {
+  #   req(datosLocalesTweets$data)
+  #   {
+  #     #crear corpus
+  #     inWordcloud <- createCorpus( datosLocalesTweets$data$text) %>%
+  #       cleanDataTweetsV2('') %>% #new
+  #       #cleanDataTweetsV2(input$geoLocalSearch) %>% @old
+  #       structureDataTweet() %>%
+  #       calcWordcloud(input$maxWord)
+  #     
+  #     return(inWordcloud)
+  #   }
+  # })
+  
+  wordcloud <- eventReactive(input$maxWord, {
     req(datosLocalesTweets$data)
     {
       #crear corpus
@@ -409,14 +458,14 @@ shinyServer(function(input, output, session) {
         cleanDataTweetsV2('') %>% #new
         #cleanDataTweetsV2(input$geoLocalSearch) %>% @old
         structureDataTweet() %>%
-        calcWordcloud()
+        calcWordcloud(input$maxWord, input$freqMin)
       
       return(inWordcloud)
     }
   })
   
   ####calculo nube de palabras online####
-  wordcloudOnline <- eventReactive(input$calcGeoSentiment, {
+  wordcloudOnline <- eventReactive(input$maxOnlineWord, {
     req(datosOnlineTweets$data)
     {
       #crear corpus
@@ -424,7 +473,7 @@ shinyServer(function(input, output, session) {
         cleanDataTweetsV2('') %>% #new
         #cleanDataTweetsV2(input$geoLocalSearch) %>% @old
         structureDataTweet() %>%
-        calcWordcloud()
+        calcWordcloud(input$maxOnlineWord, input$minOnlineFreq)
       
       return(inWordcloud)
     }
@@ -432,14 +481,18 @@ shinyServer(function(input, output, session) {
   
   ####grafica de suavizado######
   output$scatterplot <- renderPlot({
-    if(input$calcSentiment){
+     #if(input$calcSentiment){
+    if(input$minTweets | input$maxTweets){
       #plot(resultadoSentimiento(), ylab = "Valencia emocional", xlab = "Duración del texto", main = "Trazado a nivel de oración")
       #plot(resultadoSentimiento())
       result.df <- data.frame(resultadoSentimiento())
       result.df  <- result.df  %>% group_by(element_id) %>% summarise(sentiment = mean(sentiment))
       
-         ggplot(data = result.df, mapping =  aes(x = element_id, y = sentiment), alpha=.4) +
-           geom_point(alpha = 1/25, shape = 21)+
+      result.df %>%
+        filter(element_id >= input$minTweets & element_id <= input$maxTweets) %>%
+        ggplot( mapping =  aes(x = element_id, y = sentiment), alpha=.4) +
+         #ggplot(data = result.df, mapping =  aes(x = element_id, y = sentiment), alpha=.4) +
+        geom_point(alpha = 1/25, shape = 21)+
         geom_smooth(se=T,  color = "blue" ) +
         geom_hline(yintercept = 0, color = "red", linetype = 2) +
         ylab("Polaridad")+
@@ -452,12 +505,12 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  #matriz de termino documentos
+  ####matriz de termino documentos####
   output$barPlotTDM <-renderPlot({
     if(input$calcSentiment){
       #barplot(wordFrecuencyTerm(), las = 2, col = rainbow(40), width = .1)
       barplot(wordFrecuencyTerm(), main = "Frecuencia de palabras en el documento", las = 2, col = rainbow(40), width = 0.2,
-              ylab = "Número de frecuencia", xlab = "Palabras en el documento")
+              ylab = "Número de frecuencia")
     }
   })
   
@@ -486,7 +539,7 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  
+  ####grafico nube palabras local####
   output$wordCloudPlot <-renderPlot({
     if(input$calcSentiment){
       wordcloud()
@@ -536,19 +589,37 @@ shinyServer(function(input, output, session) {
     input$EcuadorMap_click
   })
   
-  
+  ####cargar datos online####
+  observeEvent(input$loadDataOnline, {
+    withBusyIndicator("loadDataOnline", {
+      
+      req(input$geoSearch)
+      {
+        geoSearchedTweets$data <- searchTweets(input$geoSearch, sinceDate = input$geoFromToDate[1], 
+                                               untilDate =input$geoFromToDate[2], geoCode =  clickedValue(), ratio = input$geoRatio)
+        
+        tweetsDataFormat$data <- geoSearchedTweets$data %>%
+          createData() 
+        
+        output$datasetOnlineChosen <- reactive({ TRUE })
+        updateTabsetPanel(session, "tabsetPanel", "resulOnlineTab")
+        
+      }
+    })
+  })
   
   #####calculo sentimiento online####
   geoPolarityResult <- eventReactive(input$calcGeoSentiment, {
    
-    req(input$geoSearch)
+    #req(input$geoSearch)
+    req(tweetsDataFormat$data)
     {
-      geoSearchedTweets$data <- searchTweets(input$geoSearch, sinceDate = input$geoFromToDate[1], 
-                                          untilDate =input$geoFromToDate[2], geoCode =  clickedValue(), ratio = input$geoRatio)
-      
-      tweetsDataFormat$data <- geoSearchedTweets$data %>%
-                                createData() 
-        
+      # geoSearchedTweets$data <- searchTweets(input$geoSearch, sinceDate = input$geoFromToDate[1], 
+      #                                     untilDate =input$geoFromToDate[2], geoCode =  clickedValue(), ratio = input$geoRatio)
+      # 
+      # tweetsDataFormat$data <- geoSearchedTweets$data %>%
+      #                           createData() 
+      #   
         
       tweetsDataPolarity$data <-  tweetsDataFormat$data %>%                       
                                 calcSentiment(input$geoSearch) 
@@ -569,7 +640,12 @@ shinyServer(function(input, output, session) {
       #                                    "userName", "Nombre", "Apellido", "Ciudad",
       #                                    "Pais", "Genero", "element_id", "id_ciudades", "Cálculo sentimiento", "polaridad")
       # 
-      
+      tweetsDataFormat$data <- datosOnlineTweets$data
+      names(tweetsDataFormat$data) = c("text" , "fechaTweet",
+                                         "userName", "Nombre", "Apellido", "Ciudad",
+                                         "Pais", "Genero", "element_id", "Cálculo sentimiento", "polaridad")
+
+    
       return (tweetsDataPolarity$data)
       
     
@@ -729,7 +805,7 @@ shinyServer(function(input, output, session) {
   #   data = NULL
   # )
   
-  #agregamos evento reactivo para obtener tweets con polaridad
+  ####tweets con polaridad online####
   tweetsDataWithoutCleanText <- eventReactive(tweetsDataPolarity$data, {
     #agregamos polaridad
     tweets.df <- tweetsDataPolarity(tweetsDataFormat$data, tweetsDataPolarity$data)
@@ -738,25 +814,31 @@ shinyServer(function(input, output, session) {
     
   })
   
- #tabla datos tweets en online
+ ####tabla datos online####
   output$twitterData <- DT::renderDataTable(
     
+    tweetsDataFormat$data[,c(-9)] %>%
+      DT::datatable(options = list(scrollX=TRUE, scrollCollapse=TRUE, scrollY = 500, pageLength = 10, language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Buscar", 
+                                                                                                                      info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                                                                                                                      paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
+                    class = 'cell-border stripe',
+                    colnames = c("Texto" = "text", "Fecha tweet" = "fechaTweet",
+                                 "Nombre usuario"= "userName", "Nombre" = "Nombre", "Apellido" = "Apellido", "Ciudad" = "Ciudad",
+                                 "País" = "Pais", "Género" = "Genero"),
+                                    rownames = FALSE)
    
-    tweetsDataWithoutCleanText()[,-10]%>%
-      DT::datatable( #colnames = c("Número","Texto", "Fecha", "Usuario"),             
-                   options = list(pageLength = 10), 
-                   rownames = FALSE,
-                   colnames = c("Texto" = "text", "Fecha creación" = "createdDate", 
-                                "Nombre usuario"= "userName", "Fecha Tweet" = "fechaTweet", "Calculo polaridad" = "CalculoPolaridad", "Polaridad"="Polaridad") )
   )
   
   ####grafica de suavizado online######
   output$scatterplotOnline <- renderPlot({
-    if(input$calcGeoSentiment){
+    #if(input$calcGeoSentiment){
+    if(input$minOnlineTweets | input$maxOnlineTweets){ 
       result.df <- data.frame(geoPolarityResult())
       result.df  <- result.df  %>% group_by(element_id) %>% summarise(sentiment = mean(sentiment))
       
-      ggplot(data = result.df, mapping =  aes(x = element_id, y = sentiment), alpha=.4) +
+      result.df %>%
+      filter(element_id >= input$minOnlineTweets & element_id <= input$maxOnlineTweets) %>%
+      ggplot( mapping =  aes(x = element_id, y = sentiment), alpha=.4) +
         geom_point(alpha = 1/25, shape = 21)+
         geom_smooth(se=T,  color = "blue" ) +
         geom_hline(yintercept = 0, color = "red", linetype = 2) +
@@ -765,8 +847,7 @@ shinyServer(function(input, output, session) {
         # xlim(0,999) 
         theme_gdocs() +
         theme(legend.position =   "bottom", legend.direction = "horizontal", legend.box = "vertical")
-      
-      
+
     }
   })
   
@@ -913,6 +994,9 @@ shinyServer(function(input, output, session) {
   lexico_ec_table <- reactiveVal(lexico_ec_table)
   
   proxy = DT::dataTableProxy('dictionary_ec')
+  
+  lexico_ec_ShiftValenceTable <- reactiveVal(lexicoCambioSentimiento_table)
+  
   proxyShiftValence = DT::dataTableProxy('dictionary_ec_ShiftValence')
   
   
@@ -958,22 +1042,22 @@ shinyServer(function(input, output, session) {
    
   })
   
-  #configuracion del diccionario
+  ####configuracion del diccionario principal####
   output$dictionary_ec <- DT::renderDataTable(
     
-    if(input$showData)
-    {
+   #if(input$showData)
+    #{
         datalexico <- lexico_ec_table() %>%
         DT::datatable( options = list(pageLength = 10,
-                                      language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
+                                      language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Buscar", 
                                                                        info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
                                                                        paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
                        rownames = FALSE,
-                       editable = FALSE,
+                       editable = input$edit_btn,
                        colnames = c("Palabra" = "word", "Valor" = "value"),
                        filter = "top"
                        )
-    }
+    #}
   )
   
   
@@ -1002,26 +1086,49 @@ shinyServer(function(input, output, session) {
     }
   )
   
+  observeEvent(input$dictionary_ec_ShiftValence_cell_edit, {
+    info = input$dictionary_ec_ShiftValence_cell_edit
+    #str(info)
+    i = info$row
+    j = info$col+1
+    v = info$value
+    x <- lexico_ec_ShiftValenceTable()
+    x[i, j] <- DT::coerceValue(v, x[i, j])
+    DT::replaceData(proxyShiftValence, lexico_ec_ShiftValenceTable(x), resetPaging = FALSE)  # important
+  })
   
-  #configuracion diccionario cambio de sentimiento
+  observeEvent(input$saveShiftValence_btn,{
+    
+    #asignacion a variable global con <<
+    lexicoCambioSentimiento <<- lexico_ec_ShiftValenceTable() %>% select(x, y)  
+    
+    lexicoCambioSentimiento %>%
+      write.csv(file="LexicoCambioSentimientos.csv", row.names = FALSE )
+    
+  }
+  )
+  
+  
+  
+  ####Diccionario cambio de sentimiento####
   
   dictionaryShiftValence_ec <- reactiveVal(lexicoCambioSentimiento)
   
   output$dictionary_ec_ShiftValence <- DT::renderDataTable(
     
-    if(input$showDataShifValence)
-    {
+   # if(input$showDataShifValence)
+   # {
       dictionaryShiftValence_ec() %>%
         DT::datatable( options = list(pageLength = 10,
-                                      language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Filtro", 
+                                      language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Buscar", 
                                                       info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
                                                       paginate = list('first'='Primero', 'last'='Último', 'next'='Siguiente', 'previous'= 'Anterior'))),
                        rownames = FALSE,
-                       editable = FALSE,
+                       editable = input$editShitfValence_btn,
                        colnames = c("Palabra" = "x", "Valor" = "y"),
                        filter = "top"
         )
-    }
+    #}
   )
   
   ####logica cargar nuevas palabras####
@@ -1060,12 +1167,39 @@ shinyServer(function(input, output, session) {
   #   }
   # )
   
-  # download plate summary
+  ####Descargar archivo####
   output$saveMetaBtn <- downloadHandler(
     filename = "DatosLocales-polaridad.csv",
     
     content = function(file) {
       write.csv(datosLocalesTweets$data , file, row.names = FALSE)
+    }
+  )
+  
+  output$saveMetaBtnOnline <- downloadHandler(
+    filename = "DatosOnline-polaridad.csv",
+    
+    content = function(file) {
+      write.csv(datosOnlineTweets$data , file, row.names = FALSE)
+    }
+  )
+  
+  
+  
+  output$savePrimaryDictionaryBtn <- downloadHandler(
+    filename = "Diccionario_principal.csv",
+    
+    content = function(file) {
+      data.frame(lexico_ec_table()) %>% 
+      write.csv( file, row.names = FALSE)
+    }
+  )
+  
+  output$saveValenceDictionaryBtn <- downloadHandler(
+    filename = "Diccionario_Cambios_sentimiento.csv",
+    
+    content = function(file) {
+      write.csv(lexicoCambioSentimiento_table , file, row.names = FALSE)
     }
   )
   
@@ -1099,7 +1233,7 @@ shinyServer(function(input, output, session) {
       
       vals$data <- paste0( input$word, input$valorPol)
       new_row <- c(input$word, input$valorPol)
-      print(new_row)
+    
       
       t = rbind(data.frame(word = as.character(input$word),
                            value = as.numeric(input$valorPol)), lexico_ec_table(), stringsAsFactors = FALSE )

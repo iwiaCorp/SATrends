@@ -16,6 +16,8 @@ fileNameLexicoValenceShift_EC <- "LexicoCambioSentimientos.csv"
 if(file.exists(fileNameLexicoValenceShift_EC)){
   lexicoCambioSentimiento <- tryCatch(read_csv(fileNameLexicoValenceShift_EC), error=function(e) 1)
   
+  lexicoCambioSentimiento_table <- data.frame(lexicoCambioSentimiento)
+  
 }
 
 fileNameCities_EC <- "tabla_ciudad_EC_depurada.csv"
