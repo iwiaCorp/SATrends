@@ -488,7 +488,7 @@ body <- dashboardBody(
                        column( width = 12, 
                              
                                fileInput("importedDictFile", 
-                                         label = "Archivo",
+                                         label = "Cargar nuevo diccionario principal",
                                          buttonLabel = "Buscar diccionario",
                                          
                                          multiple = FALSE, 
@@ -497,7 +497,7 @@ body <- dashboardBody(
                                                    ".csv")),
                                div(style="display:inline-block;",
                                    actionButton("importDictionary", "Cargar Diccionario"), 
-                                   helpPopup("Seleccione un archivo para importar un nuevo diccionario.")
+                                   helpPopup("Seleccione un archivo para importar un nuevo diccionario principal.")
                                ),
                                downloadButton("savePrimaryDictionaryBtn", "Descargar diccionario.")
                        )
@@ -529,7 +529,28 @@ body <- dashboardBody(
                   # actionButton("save_btnShiftValence", "Guardar"),
                    br(),
                    br(),
-                  downloadButton("saveValenceDictionaryBtn", "Descargar diccionario."),
+                  wellPanel(
+                    
+                    fluidRow(
+                      column( width = 12, 
+                              
+                              fileInput("importedDictValenceFile", 
+                                        label = "Cargar nuevo diccionario de cambios de sentimientos",
+                                        buttonLabel = "Buscar diccionario",
+                                        
+                                        multiple = FALSE, 
+                                        accept =c("csv",
+                                                  "text/comma-separated-values",
+                                                  ".csv")),
+                              div(style="display:inline-block;",
+                                  actionButton("importValenceDictionary", "Cargar Diccionario"), 
+                                  helpPopup("Seleccione un archivo para importar un nuevo diccionario de cambios de sentimientos.")
+                              ),
+                              downloadButton("saveValenceDictionaryBtn", "Descargar diccionario.")
+                      )
+                    )
+                  ),
+                  
                   br(),
                   br(),
                    DT::dataTableOutput(output = "dictionary_ec_ShiftValence")
