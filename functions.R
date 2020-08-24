@@ -77,23 +77,7 @@ createData <- function(tweets){
   
   tweetsUnion <- tweetsFecha %>%
     left_join( userGenero, by = c("userName" = "screenName"))
-
  
-#  tweetsUnion %>%
- #   arrange(recordNum) 
-  
-  #colnames(tweetsUnion) <- c("Texto", "Fecha creación", "Nombre usuario", "Fecha tweet", "Nombre", "Apellido", "Ciudad", "País", "Género")
-  
-  #TODO: pendiente cambiar valor male to hombre
-  #library(plyr)
-  
- # tweetsUnion$Genero <- revalue(tweetsUnion$Genero, c("male" = "hombre"))
-  #tweetsUnion$Genero <- as.character(tweetsUnion$Genero)
-  #tweetsUnion[tweetsUnion$Genero == "female"] <- "mujer"
-  
-  # tweetsUnion<- tweetsUnion %>%
-  #   mutate(Genero = ifelse(nchar(Genero) == 10, "male", Genero)) 
-  
   tweetsUnion<- tweetsUnion %>%
     mutate(Genero = ifelse(Genero == "NULL", "ND", Genero)) 
  
@@ -109,19 +93,7 @@ createData <- function(tweets){
   tweetsUnion$Genero <- as.character(tweetsUnion$Genero)
   tweetsUnion$Genero[tweetsUnion$Genero == "female"] <- "Mujer"
   tweetsUnion$Genero[tweetsUnion$Genero == "male"] <- "Hombre"
-  
-  # tweetsUnion<- tweetsUnion %>%
-  #   mutate(Genero = ifelse(Genero == "female", "Mujer", Genero)) 
-  # 
-  # tweetsUnion<- tweetsUnion %>%
-  #   mutate(Genero = ifelse(Genero == "male", "Hombre", Genero))
-  
-  # tweetsUnion<- tweetsUnion %>%
-  #   mutate(Ciudad = ifelse(Ciudad == "" || nchar(Ciudad) == 0, "ND", tweetsUnion$Ciudad)) 
-  # 
-  # tweetsUnion<- tweetsUnion %>%
-  #   mutate(Ciudad = sapply(tweetsUnion$Ciudad, fillCitiesBlank)) 
-  # 
+ 
   tweetsUnion<- tweetsUnion %>%
     mutate(Ciudad = ifelse(nchar(Ciudad) == 0, "ND", tweetsUnion$Ciudad)) 
   
@@ -182,7 +154,7 @@ createCorpus <- function(text){
 
 #proceso #3: limpieza datos
 
-cleanDataTweets <- function(tweetText){
+cleanDataTweets <- function(tweetText, excludedWords){
   opinionText <- tweetText
   opinionText$text <- gsub("(RT|via)|((?:\\b\\w*@\\w+)+)", "", opinionText$text)
   opinionText$text <- gsub("\\n", " ", opinionText$text )
@@ -206,6 +178,9 @@ cleanDataTweets <- function(tweetText){
   opinionText$text <- tolower(opinionText$text)
   opinionText$text <- removeWords(opinionText$text, words = stopwords("spanish")[c(-16, -263, -220, -11, -5, -217, -44, -55)])
   opinionText$text <- removeWords( opinionText$text, words = c("usted", "pues", "tal", "tan", "así", "dijo", "cómo", "sino", "entonces", "aunque", "don", "doña"))
+  wordsExcluded <- strsplit(excludedWords, ";")[[1]] #excluir palabras
+  opinionText$text <- removeWords( opinionText$text, words = c(wordsExcluded))
+  
   opinionText$text <- removePunctuation(opinionText$text)
   opinionText$text <- removeNumbers(opinionText$text)
   opinionText$text <- stripWhitespace(opinionText$text)
@@ -348,10 +323,21 @@ getGender <- function(names){
   
 }
 
-calcSentiment <- function(tweetsData, searchedTweet){
+#calcSentiment <- function(tweetsData, searchedTweet, dicctionaryChoosen){
+calcSentiment <- function(tweetsData, searchedTweet, excludedWords){
+  #verificar configuracion diccionario
+  # if(dicctionaryChoosen == 2){
+  #   
+  #   lexico_ec_internal <- lexico_ec_session
+  #   lexicoCambioSentimiento_internal <- lexicoCambioSentimiento_session
+  # }
+  # else{
+  #   lexico_ec_internal <- lexico_ec
+  #   lexicoCambioSentimiento_internal <- lexicoCambioSentimiento
+  # }
+
   
-  
-  tweets <- cleanDataTweets(tweetsData)
+  tweets <- cleanDataTweets(tweetsData, excludedWords)
   #tweets <- cleanDataTweetsV2(tweetsData$text, searchedTweet) funciona con tm
   
   
@@ -761,14 +747,7 @@ wordPercentSentiment <- function(textData){
   
   clean_dt$word <- factor(clean_dt$word,
                           levels = rev(unique(clean_dt$word)))
-  #clean_dt <- clean_dt %>%
-   # mutate(Polaridad = ifelse(value > 0, "Positivo", "Negativo"))
-  
-  # ggplot(clean_dt, aes(x = word, y = n, fill = Polaridad)) +
-  #   geom_col(show.legend = F) +
-  #   facet_wrap(~Polaridad, scale = "free")+
-  #   coord_flip()+
-  #   labs(title = "Conteo palabras de sentimiento", x = "Palabras", y = "Número")
+ 
   
   clean_dt %>%
     mutate(perc = (n/sum(n))*100) %>%

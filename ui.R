@@ -161,6 +161,13 @@ body <- dashboardBody(
                                          class = "btn-primary"
                                        )
                                      ),
+                                     p(),
+                                     radioButtons("dicctionatConfig", "Perfil diccionario:",
+                                                  choices = list("Diccionarios por defecto" = 1, "Diccionarios modificados" = 2)),
+                                     textInput("excludedLocalWords", label = "Excluir palabras", placeholder = "Ingrese palabras a excluir", width = '30%'),
+                                     
+
+                                     
                                     p(),
                                     
                                   
@@ -475,7 +482,27 @@ body <- dashboardBody(
                    span(textOutput("newMappedWord"), style="color:red"),
                    br(),
                    br(),
-                   downloadButton("savePrimaryDictionaryBtn", "Descargar diccionario."),
+                   wellPanel(
+                     
+                     fluidRow(
+                       column( width = 12, 
+                             
+                               fileInput("importedDictFile", 
+                                         label = "Archivo",
+                                         buttonLabel = "Buscar diccionario",
+                                         
+                                         multiple = FALSE, 
+                                         accept =c("csv",
+                                                   "text/comma-separated-values",
+                                                   ".csv")),
+                               div(style="display:inline-block;",
+                                   actionButton("importDictionary", "Cargar Diccionario"), 
+                                   helpPopup("Seleccione un archivo para importar un nuevo diccionario.")
+                               ),
+                               downloadButton("savePrimaryDictionaryBtn", "Descargar diccionario.")
+                       )
+                     )
+                   ),
                    br(),
                    br(),
                    DT::dataTableOutput(output = "dictionary_ec")

@@ -250,7 +250,8 @@ shinyServer(function(input, output, session) {
     req(dataFileLoaded())
     {
       #resultado <- calcSentiment( datosLocalesTweets$data, input$geoLocalSearch) #old
-      resultado <- calcSentiment( datosLocalesTweets$data, '') #new
+      resultado <- calcSentiment( datosLocalesTweets$data, '', input$excludedLocalWords) 
+     # resultado <- calcSentiment( datosLocalesTweets$data, '', input$dicctionatConfig) #new
       #agrupar
       resultadoGrouped <- data.frame(resultado)
       resultadoGrouped <- resultadoGrouped %>% group_by(element_id) %>% summarise(sentiment = mean(sentiment))
