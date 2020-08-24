@@ -162,7 +162,7 @@ body <- dashboardBody(
                                        )
                                      ),
                                      p(),
-                                     radioButtons("dicctionatConfig", "Perfil diccionario:",
+                                     radioButtons("dictionaryConfig", "Perfil diccionario:",
                                                   choices = list("Diccionarios por defecto" = 1, "Diccionarios modificados" = 2)),
                                      textInput("excludedLocalWords", label = "Excluir palabras", placeholder = "Ingrese palabras a excluir", width = '30%'),
                                      
@@ -495,6 +495,8 @@ body <- dashboardBody(
                                          accept =c("csv",
                                                    "text/comma-separated-values",
                                                    ".csv")),
+                               radioButtons("addOrRemplaceWordDictMain", "Acciones:",
+                                            choices = list("Añadir palabras al diccionario" = 1, "Reemplazar palabras del diccionario" = 2)),
                                div(style="display:inline-block;",
                                    actionButton("importDictionary", "Cargar Diccionario"), 
                                    helpPopup("Seleccione un archivo para importar un nuevo diccionario principal.")
@@ -542,6 +544,8 @@ body <- dashboardBody(
                                         accept =c("csv",
                                                   "text/comma-separated-values",
                                                   ".csv")),
+                              radioButtons("addOrRemplaceWordDictValence", "Acciones:",
+                                           choices = list("Añadir palabras al diccionario" = 1, "Reemplazar palabras del diccionario" = 2)),
                               div(style="display:inline-block;",
                                   actionButton("importValenceDictionary", "Cargar Diccionario"), 
                                   helpPopup("Seleccione un archivo para importar un nuevo diccionario de cambios de sentimientos.")

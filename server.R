@@ -34,7 +34,7 @@ shinyServer(function(input, output, session) {
   
   #habilitar seguimiento
  #debugonce(createCorpus)
-# debugonce(calcSentiment)
+ debugonce(calcSentiment)
  # debugonce(headMapPlot)
   
   # reactive values we will use throughout the app
@@ -250,8 +250,8 @@ shinyServer(function(input, output, session) {
     req(dataFileLoaded())
     {
       #resultado <- calcSentiment( datosLocalesTweets$data, input$geoLocalSearch) #old
-      resultado <- calcSentiment( datosLocalesTweets$data, '', input$excludedLocalWords) 
-     # resultado <- calcSentiment( datosLocalesTweets$data, '', input$dicctionatConfig) #new
+     # resultado <- calcSentiment( datosLocalesTweets$data, '', input$excludedLocalWords) 
+      resultado <- calcSentiment( datosLocalesTweets$data, '', input$excludedLocalWords, input$dictionaryConfig) #new
       #agrupar
       resultadoGrouped <- data.frame(resultado)
       resultadoGrouped <- resultadoGrouped %>% group_by(element_id) %>% summarise(sentiment = mean(sentiment))
@@ -1075,14 +1075,15 @@ shinyServer(function(input, output, session) {
     DT::replaceData(proxy, lexico_ec_table(x), resetPaging = FALSE)  # important
   })
   
-  #guardar nuevos cambios
+  ####guardar diciconario principal####
   observeEvent(input$save_btn,{
     
     #asignacion a variable global con <<
-    lexico_ec <<- lexico_ec_table() %>% select(word, value)  
+    #lexico_ec <<- lexico_ec_table() %>% select(word, value)  
+    lexico_ec_session <- lexico_ec_table() %>% select(word, value) 
     
-    lexico_ec %>%
-    write.csv(file="lexico_ec_custom.csv", row.names = FALSE )
+    #lexico_ec %>%
+    #write.csv(file="lexico_ec_custom.csv", row.names = FALSE )
     
     }
   )
@@ -1098,13 +1099,15 @@ shinyServer(function(input, output, session) {
     DT::replaceData(proxyShiftValence, lexico_ec_ShiftValenceTable(x), resetPaging = FALSE)  # important
   })
   
+  ####guardar diccionario cambio sentimientos####
   observeEvent(input$saveShiftValence_btn,{
     
     #asignacion a variable global con <<
-    lexicoCambioSentimiento <<- lexico_ec_ShiftValenceTable() %>% select(x, y)  
+    #lexicoCambioSentimiento <<- lexico_ec_ShiftValenceTable() %>% select(x, y)  
+    lexicoCambioSentimiento_session <- lexico_ec_ShiftValenceTable() %>% select(x, y) 
     
-    lexicoCambioSentimiento %>%
-      write.csv(file="LexicoCambioSentimientos.csv", row.names = FALSE )
+    #lexicoCambioSentimiento %>%
+    #  write.csv(file="LexicoCambioSentimientos.csv", row.names = FALSE )
     
   }
   )
@@ -1186,12 +1189,12 @@ shinyServer(function(input, output, session) {
   )
   
   
-  
+  ####descargar diccionario principal####
   output$savePrimaryDictionaryBtn <- downloadHandler(
     filename = "Diccionario_principal.csv",
     
     content = function(file) {
-      data.frame(lexico_ec_table()) %>% 
+      data.frame(lexico_ec_table())[input[["dictionary_ec_rows_all"]],] %>% 
       write.csv( file, row.names = FALSE)
     }
   )
@@ -1352,6 +1355,63 @@ shinyServer(function(input, output, session) {
     
     
     
+  })
+  
+  ####agregar nuevo diccionario#####
+  # dataNewWordsFileLoaded <- eventReactive(input$fileLoadedNewWords,{
+  #   req(input$fileLoadedNewWords)
+  #   inFile <- read.csv(input$fileLoadedNewWords$datapath )
+  #   if(nrow(inFile) == 0)
+  #     return(NULL)
+  #   
+  #   newWordsLocal$data <- inFile %>%
+  #     
+  #     createNewWords()
+  #   return(newWordsLocal$data)
+  # })
+  # 
+  # newWordMainDictionary <- reactive(
+  #   
+  # )
+  
+  #valor reactivo para datos locales cargados
+  newWordMainDictionary <- reactiveValues(
+    data = NULL
+  )
+  
+  
+  observeEvent(input$importDictionary, {
+    withBusyIndicator("importDictionary", {
+      inFile <- read.csv(input$importedDictFile$datapath )
+      
+      if(nrow(inFile) == 0)
+        return(NULL)
+      
+      #diccionario
+      newWordMainDictionary$data <- inFile 
+      
+      dataDictionaryMain <- data.frame(newWordMainDictionary$data)
+      
+      if(input$addOrRemplaceWordDictMain == 1){
+  
+        t = rbind(dataDictionaryMain, lexico_ec_table(), stringsAsFactors = FALSE )
+       
+   
+        DT::replaceData(proxy, data =  lexico_ec_table(t), resetPaging = FALSE, rownames = FALSE )
+        
+        lexico_ec_session <- lexico_ec_table(t)
+        
+      }
+      else{
+        
+        
+        lexico_ec_session <- lexico_ec_table(dataDictionaryMain)
+          
+        DT::replaceData(proxy, data =  lexico_ec_table(dataDictionaryMain), resetPaging = FALSE, rownames = FALSE )
+        
+      }
+      
+    })
   })
   
   
