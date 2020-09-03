@@ -18,7 +18,7 @@ createTwitterConection <- function(){
     error = function(c)
     {
       message("Error: No se pudo establecer autorización con API Twitter")
-      print(c)
+     
     }
     
   )

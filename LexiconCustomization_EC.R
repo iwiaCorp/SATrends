@@ -8,6 +8,9 @@ if(file.exists(fileNameLexico_EC)){
   
   lexico_ec_table <- data.frame(lexico_ec)
   
+  lexico_changed <- lexico_ec
+  #lexico_ec_table_session <- lexico_ec_table
+  
 }
   
 #lexico cambio sentimiento español-ecuador
@@ -17,6 +20,10 @@ if(file.exists(fileNameLexicoValenceShift_EC)){
   lexicoCambioSentimiento <- tryCatch(read_csv(fileNameLexicoValenceShift_EC), error=function(e) 1)
   
   lexicoCambioSentimiento_table <- data.frame(lexicoCambioSentimiento)
+  
+   lexicoCambioSentimiento_session <- lexicoCambioSentimiento
+   #lexicoCambioSentimiento_table_session <- lexicoCambioSentimiento_table
+   
   
 }
 

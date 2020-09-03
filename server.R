@@ -567,7 +567,7 @@ shinyServer(function(input, output, session) {
   output$sentimenWordCountsPlot <- renderPlot(
     #if(nrow(datosLocalesTweets$data) > 0){
     if(input$calcSentiment){
-      wordCountSentiment(datosLocalesTweets$data)
+      wordCountSentiment(datosLocalesTweets$data, input$excludedLocalWords)
     }
   )
   
@@ -575,7 +575,7 @@ shinyServer(function(input, output, session) {
   output$sentimenWordPercentPlot <- renderPlot(
     #if(nrow(datosLocalesTweets$data) > 0){
     if(input$calcSentiment){ 
-      wordPercentSentiment(datosLocalesTweets$data)
+      wordPercentSentiment(datosLocalesTweets$data, input$excludedLocalWords)
     }
     
   )
@@ -623,8 +623,8 @@ shinyServer(function(input, output, session) {
       #   
         
       tweetsDataPolarity$data <-  tweetsDataFormat$data %>%                       
-                                calcSentiment(input$geoSearch) 
-      
+                                calcSentiment(input$geoSearch, input$excludedLocalWordsOnline, input$dictionaryConfigOnline) 
+       
       #agrupar
       resultadoGrouped <- data.frame(tweetsDataPolarity$data)
       resultadoGrouped <- resultadoGrouped %>% group_by(element_id) %>% summarise(sentiment = mean(sentiment))
@@ -905,14 +905,14 @@ shinyServer(function(input, output, session) {
   output$sentimenWordCountsPlotOnline <- renderPlot(
   
     if(input$calcGeoSentiment){
-      wordCountSentimentOnline(datosOnlineTweets$data)
+      wordCountSentimentOnline(datosOnlineTweets$data, input$excludedLocalWordsOnline)
     }
   )
   
   ####grafico porción de uso de palabras online####
   output$sentimenWordPercentPlotOnline <- renderPlot(
     if(input$calcGeoSentiment){ 
-      wordPercentSentiment(datosOnlineTweets$data)
+      wordPercentSentiment(datosOnlineTweets$data, input$excludedLocalWordsOnline)
     }
     
   )
@@ -1048,7 +1048,8 @@ shinyServer(function(input, output, session) {
     
    #if(input$showData)
     #{
-        datalexico <- lexico_ec_table() %>%
+       # datalexico <- lexico_ec_table() %>%
+      datalexico <- lexico_changed %>% 
         DT::datatable( options = list(pageLength = 10,
                                       language = list(lengthMenu = "Mostrar _MENU_ registros", search = "Buscar", 
                                                                        info= "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
@@ -1080,7 +1081,9 @@ shinyServer(function(input, output, session) {
     
     #asignacion a variable global con <<
     #lexico_ec <<- lexico_ec_table() %>% select(word, value)  
-    lexico_ec_session <- lexico_ec_table() %>% select(word, value) 
+   
+    assign("lexico_changed", lexico_changed, envir = .GlobalEnv)
+    
     
     #lexico_ec %>%
     #write.csv(file="lexico_ec_custom.csv", row.names = FALSE )
@@ -1357,29 +1360,15 @@ shinyServer(function(input, output, session) {
     
   })
   
-  ####agregar nuevo diccionario#####
-  # dataNewWordsFileLoaded <- eventReactive(input$fileLoadedNewWords,{
-  #   req(input$fileLoadedNewWords)
-  #   inFile <- read.csv(input$fileLoadedNewWords$datapath )
-  #   if(nrow(inFile) == 0)
-  #     return(NULL)
-  #   
-  #   newWordsLocal$data <- inFile %>%
-  #     
-  #     createNewWords()
-  #   return(newWordsLocal$data)
-  # })
-  # 
-  # newWordMainDictionary <- reactive(
-  #   
-  # )
+ 
+
   
   #valor reactivo para datos locales cargados
   newWordMainDictionary <- reactiveValues(
     data = NULL
   )
   
-  
+  ####agregar nuevo diccionario#####
   observeEvent(input$importDictionary, {
     withBusyIndicator("importDictionary", {
       inFile <- read.csv(input$importedDictFile$datapath )
@@ -1396,18 +1385,22 @@ shinyServer(function(input, output, session) {
   
         t = rbind(dataDictionaryMain, lexico_ec_table(), stringsAsFactors = FALSE )
        
-   
-        DT::replaceData(proxy, data =  lexico_ec_table(t), resetPaging = FALSE, rownames = FALSE )
+        assign("lexico_changed", t, envir = .GlobalEnv)
         
-        lexico_ec_session <- lexico_ec_table(t)
+   
+       # DT::replaceData(proxy, data =  lexico_ec_table(t), resetPaging = FALSE, rownames = FALSE )
+        
+        DT::replaceData(proxy, data =  lexico_changed, resetPaging = FALSE, rownames = FALSE )
+       
         
       }
       else{
         
+        assign("lexico_changed", newWordMainDictionary$data, envir = .GlobalEnv)
         
-        lexico_ec_session <- lexico_ec_table(dataDictionaryMain)
-          
-        DT::replaceData(proxy, data =  lexico_ec_table(dataDictionaryMain), resetPaging = FALSE, rownames = FALSE )
+        
+        #DT::replaceData(proxy, data =  lexico_ec_table(dataDictionaryMain), resetPaging = FALSE, rownames = FALSE )
+        DT::replaceData(proxy, data =  lexico_changed, resetPaging = FALSE, rownames = FALSE )
         
       }
       

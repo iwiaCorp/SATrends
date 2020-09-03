@@ -339,6 +339,13 @@ body <- dashboardBody(
                                                 )
                                               ),
                                               p(),
+                                              radioButtons("dictionaryConfigOnline", "Perfil diccionario:",
+                                                           choices = list("Diccionarios por defecto" = 1, "Diccionarios modificados" = 2)),
+                                              textInput("excludedLocalWordsOnline", label = "Excluir palabras", placeholder = "Ingrese palabras a excluir", width = '30%'),
+                                              
+                                              
+                                              
+                                              p(),
                                               
                                               tabsetPanel(type = "tabs", id= "tabsetLocalResultOnline", 
                                                           

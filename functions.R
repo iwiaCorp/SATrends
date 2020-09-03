@@ -323,18 +323,19 @@ getGender <- function(names){
   
 }
 
-#calcSentiment <- function(tweetsData, searchedTweet, dicctionaryChoosen){
-calcSentiment <- function(tweetsData, searchedTweet, excludedWords){
+calcSentiment <- function(tweetsData, searchedTweet,excludedWords, dictionaryChoosen){
+#calcSentiment <- function(tweetsData, searchedTweet, excludedWords){
+  
   #verificar configuracion diccionario
-  # if(dicctionaryChoosen == 2){
-  #   
-  #   lexico_ec_internal <- lexico_ec_session
-  #   lexicoCambioSentimiento_internal <- lexicoCambioSentimiento_session
-  # }
-  # else{
-  #   lexico_ec_internal <- lexico_ec
-  #   lexicoCambioSentimiento_internal <- lexicoCambioSentimiento
-  # }
+  if(dictionaryChoosen == 2){
+
+    lexico_ec_internal <- lexico_changed
+    #lexicoCambioSentimiento_internal <- lexicoCambioSentimiento_session
+  }
+  else{
+    lexico_ec_internal <- lexico_ec
+    #lexicoCambioSentimiento_internal <- lexicoCambioSentimiento
+  }
 
   
   tweets <- cleanDataTweets(tweetsData, excludedWords)
@@ -342,8 +343,9 @@ calcSentiment <- function(tweetsData, searchedTweet, excludedWords){
   
   
   #establecer formato aceptado para nuevo diccionario
-  keyCustomEC <- data.frame(words = tolower(lexico_ec$word),
-                            polarity = lexico_ec$value,
+  #keyCustomEC <- data.frame(words = tolower(lexico_ec$word),
+  keyCustomEC <- data.frame(words = tolower(lexico_ec_internal$word),
+                            polarity = lexico_ec_internal$value,
                             stringsAsFactors = FALSE)
 
   myKeyCustomEC <- as_key(keyCustomEC)
@@ -633,10 +635,10 @@ lollipopPlot <- function(textDataTweets){
 }
 
 #grafico palabras de sentimiento
-wordCountSentiment <- function(textData){
+wordCountSentiment <- function(textData, excludedWords){
   
   cleanText <- textData%>%
-    cleanDataTweets()
+    cleanDataTweets(excludedWords)
   
   df.tm2 <- data.frame(tweets = cleanText, stringsAsFactors = F )
   df.tm2$tweets <- as.character(df.tm2$tweets) #importante el texto que no sea factor
@@ -666,7 +668,7 @@ wordCountSentiment <- function(textData){
   #   }
   #   )
   clean_dt %>%
-    filter(n>10 ) %>%
+    filter(n>1 ) %>%
     arrange(Polaridad) %>%
     ggplot( aes(x = reorder(word, n), y = factor(n), fill = Polaridad)) +
     geom_col( position = "identity" , colour = "black", size = 0.25, width = 0.5) +
@@ -691,10 +693,10 @@ wordCountSentiment <- function(textData){
   
 }
 
-wordCountSentimentOnline <- function(textData){
+wordCountSentimentOnline <- function(textData, excludedWords){
   
   cleanText <- textData%>%
-    cleanDataTweets()
+    cleanDataTweets(excludedWords)
   
   df.tm2 <- data.frame(tweets = cleanText, stringsAsFactors = F )
   df.tm2$tweets <- as.character(df.tm2$tweets) #importante el texto que no sea factor
@@ -728,10 +730,10 @@ wordCountSentimentOnline <- function(textData){
 }
 
 #grafico porcentaje de palabras de sentimiento
-wordPercentSentiment <- function(textData){
+wordPercentSentiment <- function(textData, excludedWords){
   
   cleanText <- textData%>%
-    cleanDataTweets()
+    cleanDataTweets(excludedWords)
   
   df.tm2 <- data.frame(tweets = cleanText, stringsAsFactors = F )
   df.tm2$tweets <- as.character(df.tm2$tweets) #importante el texto que no sea factor
