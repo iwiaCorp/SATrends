@@ -2,10 +2,10 @@ library(twitteR)
 
 #conexion a la API twitter
 #verificar conexion
-consumer_key <- "JuoX9f4eAPYqhhZmAf34RmoHM"
-consumer_secret <- "YDY4aRUoNk6M4w4wNcipuis1nK0tYwMK1dT1Wo2RVTs7KT2q5v"
-access_tokenTwitter <- "22375183-EkgshwuaPQ38kZw3945LBOqKtmPIE56OldDYz9ibu"
-access_secret <- "RfJx4wizQ77Yq0XS0AvuZuacnxwDkET4wnyk1ng6Zysj1"
+consumer_key <- "xxxxxxx"
+consumer_secret <- "xxxxxxxx"
+access_tokenTwitter <- "xxxxxxxxxx"
+access_secret <- "xxxxxxxxxxx"
 
 #conexion API twitter y gestion de error conexion
 createTwitterConection <- function(){
